@@ -43,3 +43,7 @@ Thumbs.db
 # Docker
 *.log
 pgdata/
+
+# Transient test artifacts
+backend/.coverage_task94.txt
+test-results/
