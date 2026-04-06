@@ -1,5 +1,3 @@
-import { User } from 'lucide-react'
-
 import { Card } from '@/components/ui/Card'
 
 type UserMessageProps = {

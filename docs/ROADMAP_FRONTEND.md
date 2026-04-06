@@ -80,12 +80,12 @@
 
 ### Definition of Done
 
-- [ ] `npm run dev` sorunsuz çalışıyor
-- [ ] Dark navy tema tüm bileşenlerde tutarlı
-- [ ] Sidebar tüm sayfalarda görünüyor
-- [ ] Korumalı route'a token olmadan gidilince `/login`'e yönlendiriyor
-- [ ] API client `NEXT_PUBLIC_API_URL`'den base URL okuyor
-- [ ] `npm test` → test altyapısı çalışıyor, temel component testleri geçiyor
+- [x] `npm run dev` sorunsuz çalışıyor
+- [x] Dark navy tema tüm bileşenlerde tutarlı
+- [x] Sidebar tüm sayfalarda görünüyor
+- [x] Korumalı route'a token olmadan gidilince `/login`'e yönlendiriyor
+- [x] API client `NEXT_PUBLIC_API_URL`'den base URL okuyor
+- [x] `npm test` → test altyapısı çalışıyor, temel component testleri geçiyor
 
 ---
 
@@ -234,14 +234,8 @@
         accent: {
           blue:  '#3b82f6',
           cyan:  '#06b6d4',
-        **Durum:** ✅ TAMAMLANDI
+        },
         verdict: {
-        **Tamamlanan:**
-        - [x] Test önce — `__tests__/components/news/NewsCard.test.tsx` oluştur (7 test):
-        - [x] `src/components/news/NewsCard.tsx`
-        - [x] `src/components/news/NewsCardSkeleton.tsx`
-        - [x] `src/components/news/PeriodFilter.tsx`
-        - [x] `src/app/(dashboard)/feed/page.tsx`
           false:  '#ef4444',
           unverified: '#f59e0b',
         }
@@ -751,13 +745,13 @@
 
 ### 📊 Phase 1 Success Metrics
 
-- [ ] `npm run dev` → `http://localhost:3000` açılıyor
-- [ ] `/chat` sayfasına gidilince sidebar görünüyor
-- [ ] Auth olmadan `/chat`'e gidilince `/login`'e yönlendiriyor
-- [ ] Sidebar'daki tüm linkler doğru route'a gidiyor
-- [ ] Dark navy tema tüm bileşenlerde tutarlı görünüyor
-- [ ] `docker compose up -d` ile frontend container ayağa kalkıyor
-- [ ] `npm test` → authStore testleri, Sidebar testleri, Button testleri geçiyor
+- [x] `npm run dev` → `http://localhost:3000` açılıyor
+- [x] `/chat` sayfasına gidilince sidebar görünüyor
+- [x] Auth olmadan `/chat`'e gidilince `/login`'e yönlendiriyor
+- [x] Sidebar'daki tüm linkler doğru route'a gidiyor
+- [x] Dark navy tema tüm bileşenlerde tutarlı görünüyor
+- [x] `docker compose up -d` ile frontend container ayağa kalkıyor
+- [x] `npm test` → authStore testleri, Sidebar testleri, Button testleri geçiyor
 
 ---
 
@@ -779,12 +773,12 @@
 
 ### Definition of Done
 
-- [ ] Login formu çalışıyor, hata mesajları gösteriliyor
-- [ ] Register formu çalışıyor
-- [ ] Giriş sonrası token Zustand'a yazılıyor
-- [ ] Korumalı sayfalara erişim sağlanıyor
-- [ ] Logout çalışıyor, token temizleniyor
-- [ ] `npm test` → auth hook testleri, login/register form testleri geçiyor
+- [x] Login formu çalışıyor, hata mesajları gösteriliyor
+- [x] Register formu çalışıyor
+- [x] Giriş sonrası token Zustand'a yazılıyor
+- [x] Korumalı sayfalara erişim sağlanıyor
+- [x] Logout çalışıyor, token temizleniyor
+- [x] `npm test` → auth hook testleri, login/register form testleri geçiyor
 
 ---
 
@@ -1051,12 +1045,12 @@
 
 ### 📊 Phase 2 Success Metrics
 
-- [ ] Login formu yanlış şifrede hata gösteriyor
-- [ ] Başarılı girişte `/chat`'e yönlendiriyor
-- [ ] Sayfa yenilenince token refresh ile oturum devam ediyor
-- [ ] Logout sonrası korumalı sayfaya gidilince `/login`'e yönlendiriyor
-- [ ] Register → Login akışı sorunsuz
-- [ ] `npm test` → LoginForm, RegisterForm, useAuth hook testleri geçiyor
+- [x] Login formu yanlış şifrede hata gösteriyor
+- [x] Başarılı girişte `/chat`'e yönlendiriyor
+- [x] Sayfa yenilenince token refresh ile oturum devam ediyor
+- [x] Logout sonrası korumalı sayfaya gidilince `/login`'e yönlendiriyor
+- [x] Register → Login akışı sorunsuz
+- [x] `npm test` → LoginForm, RegisterForm, useAuth hook testleri geçiyor
 
 ---
 
@@ -1080,11 +1074,11 @@
 
 ### Definition of Done
 
-- [ ] Kullanıcı mesaj gönderebiliyor
-- [ ] AI cevabı kaynaklar ile birlikte görünüyor
-- [ ] Boş state'de suggested questions görünüyor
-- [ ] Konuşma listesi sidebar'da görünüyor
-- [ ] `npm test` → chat bileşen testleri geçiyor
+- [x] Kullanıcı mesaj gönderebiliyor
+- [x] AI cevabı kaynaklar ile birlikte görünüyor
+- [x] Boş state'de suggested questions görünüyor
+- [x] Konuşma listesi sidebar'da görünüyor
+- [x] `npm test` → chat bileşen testleri geçiyor
 
 ---
 
@@ -1464,12 +1458,12 @@
 
 ### 📊 Phase 3 Success Metrics
 
-- [ ] Mesaj gönderildiğinde kullanıcı mesajı anında görünüyor (optimistic update)
-- [ ] AI cevabı kaynaklarla birlikte geliyor
-- [ ] Suggested question'a tıklayınca input'a yazılıyor
-- [ ] Konuşma listesi sidebar'da güncel sırada görünüyor
-- [ ] Silinmiş konuşma listeden kaldırılıyor
-- [ ] `npm test` → MessageInput, AssistantMessage, WelcomeScreen, ConversationList testleri geçiyor
+- [x] Mesaj gönderildiğinde kullanıcı mesajı anında görünüyor (optimistic update)
+- [x] AI cevabı kaynaklarla birlikte geliyor
+- [x] Suggested question'a tıklayınca input'a yazılıyor
+- [x] Konuşma listesi sidebar'da güncel sırada görünüyor
+- [x] Silinmiş konuşma listeden kaldırılıyor
+- [x] `npm test` → MessageInput, AssistantMessage, WelcomeScreen, ConversationList testleri geçiyor
 
 ---
 
@@ -1486,11 +1480,11 @@
 
 ### Definition of Done
 
-- [ ] Claim gönderilince verdict kartı görünüyor
-- [ ] Kaynaklar tıklanabilir linkler olarak görünüyor
-- [ ] Son doğrulamalar listesi yükleniyor
-- [ ] Loading state animasyonlu görünüyor
-- [ ] `npm test` → VerdictCard, ClaimInput testleri geçiyor
+- [x] Claim gönderilince verdict kartı görünüyor
+- [x] Kaynaklar tıklanabilir linkler olarak görünüyor
+- [x] Son doğrulamalar listesi yükleniyor
+- [x] Loading state animasyonlu görünüyor
+- [x] `npm test` → VerdictCard, ClaimInput testleri geçiyor
 
 ---
 
@@ -1729,7 +1723,7 @@
 **Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `__tests__/components/news/NewsCard.test.tsx` oluştur:
+- [x] Test önce — `__tests__/components/news/NewsCard.test.tsx` oluştur:
   ```tsx
   test('renders article title and source', () => {
     render(<NewsCard article={{ title: 'Big News', url: 'http://news.com', source_name: 'BBC', published_at: '2024-01-01', ai_summary: 'Summary text', category: 'technology' }} />)
@@ -1761,12 +1755,12 @@
     expect(link).toHaveAttribute('href', 'http://n.com')
   })
   ```
-- [ ] `src/components/news/NewsCard.tsx`
-- [ ] `src/components/news/NewsCardSkeleton.tsx`
-- [ ] `src/components/news/PeriodFilter.tsx`:
-  - [ ] Today / This Week / This Month tab'ları
-  - [ ] Aktif tab accent-blue alt border
-- [ ] `src/app/(dashboard)/feed/page.tsx`
+- [x] `src/components/news/NewsCard.tsx`
+- [x] `src/components/news/NewsCardSkeleton.tsx`
+- [x] `src/components/news/PeriodFilter.tsx`:
+  - [x] Today / This Week / This Month tab'ları
+  - [x] Aktif tab accent-blue alt border
+- [x] `src/app/(dashboard)/feed/page.tsx`
 
 ---
 
@@ -1802,10 +1796,14 @@
 
 **Tahmini Süre:** 1 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `src/hooks/useTrending.ts` oluştur:
+- [x] Test önce — `__tests__/hooks/useTrending.test.ts` oluştur (3 test):
+  - [x] topic ile `/news/trending` çağrısı
+  - [x] topic olmadan `/news/trending` çağrısı
+  - [x] API error handling
+- [x] `src/hooks/useTrending.ts` oluştur:
   ```ts
   export function useTrending(topic?: string) {
     return useQuery({
@@ -1822,10 +1820,10 @@
 
 **Tahmini Süre:** 2.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `__tests__/components/news/CategoryChips.test.tsx` oluştur:
+- [x] Test önce — `__tests__/components/news/CategoryChips.test.tsx` oluştur:
   ```tsx
   test('renders all category chips', () => {
     render(<CategoryChips activeChip={null} onSelect={jest.fn()} />)
@@ -1846,18 +1844,25 @@
     expect(onSelect).toHaveBeenCalledWith('Technology')
   })
   ```
-- [ ] `src/components/news/CategoryChips.tsx`
-- [ ] `src/components/news/TrendingCard.tsx`
-- [ ] `src/app/(dashboard)/trending/page.tsx`
+- [x] `src/components/news/CategoryChips.tsx`
+- [x] `src/components/news/TrendingCard.tsx`
+- [x] `src/app/(dashboard)/trending/page.tsx`
+
+**Ekstra Testler (Task 6.2 kapsamında eklendi):**
+- [x] `__tests__/components/news/TrendingCard.test.tsx` (2 test)
+- [x] `__tests__/components/news/TrendingPage.test.tsx` (2 test)
+
+**Doğrulama:**
+- [x] `npm test -- __tests__/components/news/CategoryChips.test.tsx __tests__/components/news/TrendingCard.test.tsx __tests__/components/news/TrendingPage.test.tsx`
 
 ---
 
 ### 📊 Phase 6 Success Metrics
 
-- [ ] Trending sayfası "Global Pulse" başlığıyla açılıyor
-- [ ] Kategori chip'lerine tıklanınca kartlar filtreleniyor
-- [ ] Kartlar `view_count`'a göre sıralı geliyor
-- [ ] `npm test` → CategoryChips testleri geçiyor
+- [x] Trending sayfası "Global Pulse" başlığıyla açılıyor
+- [x] Kategori chip'lerine tıklanınca kartlar filtreleniyor
+- [x] Kartlar `view_count`'a göre sıralı geliyor
+- [x] `npm test` → CategoryChips testleri geçiyor
 
 ---
 
@@ -1882,10 +1887,14 @@
 
 **Tahmini Süre:** 1 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `src/hooks/useNews.ts`'e ekle:
+- [x] Test önce — `__tests__/hooks/useNews.test.ts` içine `useCategoryNews` testleri eklendi (3 test):
+  - [x] subcategory + page parametreleri ile API çağrısı
+  - [x] default page (1) ve undefined subcategory
+  - [x] API error handling
+- [x] `src/hooks/useNews.ts`'e ekle:
   ```ts
   export function useCategoryNews(category: string, subcategory?: string, page = 1) {
     return useQuery({
@@ -1898,16 +1907,19 @@
   }
   ```
 
+**Doğrulama:**
+- [x] `npm test -- __tests__/hooks/useNews.test.ts`
+
 ---
 
 ### Task 7.2: Kategori Sayfası Bileşenleri
 
 **Tahmini Süre:** 3 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `__tests__/components/news/SubCategoryChips.test.tsx` oluştur:
+- [x] Test önce — `__tests__/components/news/SubCategoryChips.test.tsx` oluştur:
   ```tsx
   test('renders sports subcategories for sports category', () => {
     render(<SubCategoryChips category="sports" activeSubcategory={null} onSelect={jest.fn()} />)
@@ -1929,25 +1941,28 @@
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('football'))
   })
   ```
-- [ ] `src/components/news/SubCategoryChips.tsx`
-- [ ] `src/components/news/CategoryHeader.tsx`
-- [ ] `src/app/(dashboard)/category/[slug]/page.tsx`:
-  - [ ] `slug`'dan kategori adını oku
-  - [ ] Geçersiz slug → 404 sayfası
-  - [ ] Sports için: büyük featured card (üstte) + 2 sütun grid (altta)
-  - [ ] Technology için: 3 sütunlu grid
-  - [ ] Sayfalama (12'şer kart, "Load More" butonu)
+- [x] `src/components/news/SubCategoryChips.tsx`
+- [x] `src/components/news/CategoryHeader.tsx`
+- [x] `src/app/(dashboard)/category/[slug]/page.tsx`:
+  - [x] `slug`'dan kategori adını oku
+  - [x] Geçersiz slug → 404 sayfası
+  - [x] Sports için: büyük featured card (üstte) + 2 sütun grid (altta)
+  - [x] Technology için: 3 sütunlu grid
+  - [x] Sayfalama (12'şer kart, "Load More" butonu)
+
+**Doğrulama:**
+- [x] `npm test -- __tests__/components/news/SubCategoryChips.test.tsx`
 
 ---
 
 ### 📊 Phase 7 Success Metrics
 
-- [ ] `/category/sports` Sports Central başlığıyla açılıyor
-- [ ] Football chip'ine tıklanınca sadece football haberleri geliyor
-- [ ] `/category/technology` 3 sütunlu grid ile açılıyor
-- [ ] "Load More" ile sonraki sayfa yükleniyor
-- [ ] Geçersiz kategori slug'ında 404 sayfası görünüyor
-- [ ] `npm test` → SubCategoryChips testleri geçiyor
+- [x] `/category/sports` Sports Central başlığıyla açılıyor
+- [x] Football chip'ine tıklanınca sadece football haberleri geliyor
+- [x] `/category/technology` 3 sütunlu grid ile açılıyor
+- [x] "Load More" ile sonraki sayfa yükleniyor
+- [x] Geçersiz kategori slug'ında 404 sayfası görünüyor
+- [x] `npm test` → SubCategoryChips testleri geçiyor
 
 ---
 
@@ -1977,10 +1992,10 @@
 
 **Tahmini Süre:** 2 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `__tests__/components/settings/PreferencesForm.test.tsx` oluştur:
+- [x] Test önce — `__tests__/components/settings/PreferencesForm.test.tsx` oluştur:
   ```tsx
   test('renders language selector', () => {
     render(<SettingsPage />)
@@ -1999,16 +2014,22 @@
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/users/me/preferences', expect.any(Object)))
   })
   ```
-- [ ] `src/app/(dashboard)/settings/page.tsx` oluştur:
-  - [ ] Profil bölümü: display_name güncelleme
-  - [ ] Tercihler bölümü:
-    - [ ] Kategori seçimi (multi-select chip'ler)
-    - [ ] Dil seçimi (TR / EN)
-    - [ ] AI tonu (Neutral / Formal / Casual)
-    - [ ] Email digest toggle
-  - [ ] "Değişiklikleri Kaydet" butonu
-  - [ ] Hesabı sil butonu (danger zone)
-- [ ] Sidebar'a Settings linki ekle (dişli ikonu, en altta)
+- [x] `src/app/(dashboard)/settings/page.tsx` oluştur:
+  - [x] Profil bölümü: display_name güncelleme
+  - [x] Tercihler bölümü:
+    - [x] Kategori seçimi (multi-select chip'ler)
+    - [x] Dil seçimi (TR / EN)
+    - [x] AI tonu (Neutral / Formal / Casual)
+    - [x] Email digest toggle
+  - [x] "Değişiklikleri Kaydet" butonu
+  - [x] Hesabı sil butonu (danger zone)
+- [x] Sidebar'a Settings linki ekle (dişli ikonu, en altta)
+
+**Ekstra Testler (Task 8.1 kapsamında eklendi):**
+- [x] `__tests__/components/layout/Sidebar.test.tsx` icine `renders settings link in footer` senaryosu eklendi
+
+**Doğrulama:**
+- [x] `npm test -- __tests__/components/settings/PreferencesForm.test.tsx __tests__/components/layout/Sidebar.test.tsx`
 
 ---
 
@@ -2016,15 +2037,23 @@
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `src/app/(dashboard)/saved/page.tsx` oluştur:
-  - [ ] `useSavedArticles()` ile liste çek
-  - [ ] Kategori filtresi
-  - [ ] Her kart: NewsCard ile aynı tasarım + sil butonu
-  - [ ] Boş state: "Henüz makale kaydetmediniz"
-- [ ] Sidebar'a "Saved" linki ekle (Bookmark ikonu)
+- [x] `src/app/(dashboard)/saved/page.tsx` oluştur:
+  - [x] `useSavedArticles()` ile liste çek
+  - [x] Kategori filtresi
+  - [x] Her kart: NewsCard ile aynı tasarım + sil butonu
+  - [x] Boş state: "Henüz makale kaydetmediniz"
+- [x] Sidebar'a "Saved" linki ekle (Bookmark ikonu)
+
+**Ekstra Testler (Task 8.2 kapsamında eklendi):**
+- [x] `__tests__/components/news/SavedPage.test.tsx`
+- [x] `__tests__/hooks/useNews.test.ts` içine `useSavedArticles` senaryosu eklendi
+- [x] `__tests__/components/layout/Sidebar.test.tsx` içine `renders saved link in footer` senaryosu eklendi
+
+**Doğrulama:**
+- [x] `npm test -- __tests__/components/news/SavedPage.test.tsx __tests__/hooks/useNews.test.ts __tests__/components/layout/Sidebar.test.tsx`
 
 ---
 
@@ -2032,10 +2061,10 @@
 
 **Tahmini Süre:** 3 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `e2e/auth.spec.ts` oluştur:
+- [x] `e2e/auth.spec.ts` oluştur:
   ```ts
   import { test, expect } from '@playwright/test'
 
@@ -2068,7 +2097,7 @@
     await expect(page).toHaveURL('/login')
   })
   ```
-- [ ] `e2e/chat.spec.ts` oluştur:
+- [x] `e2e/chat.spec.ts` oluştur:
   ```ts
   test('sends message and receives AI response', async ({ page }) => {
     // Login ol
@@ -2087,7 +2116,7 @@
     await expect(page.locator('[data-testid="message-input"]')).not.toBeEmpty()
   })
   ```
-- [ ] `e2e/fact-check.spec.ts` oluştur:
+- [x] `e2e/fact-check.spec.ts` oluştur:
   ```ts
   test('fact check works without login', async ({ page }) => {
     await page.goto('/fact-check')
@@ -2098,6 +2127,14 @@
     expect(['TRUE', 'FALSE', 'UNVERIFIED']).toContain(verdict)
   })
   ```
+
+**Ekstra Uyum (Task 8.3 kapsamında eklendi):**
+- [x] Chat ve fact-check akışları için gerekli `data-testid` alanları eklendi
+- [x] Chat başlangıç ekranında suggested question tıklaması input'u dolduracak şekilde bağlandı
+- [x] Auth store kalıcılığı `accessToken` içerecek şekilde güncellendi
+
+**Doğrulama:**
+- [x] `npm run test:e2e -- e2e/auth.spec.ts e2e/chat.spec.ts e2e/fact-check.spec.ts`
 
 ---
 
@@ -2134,10 +2171,10 @@
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `__tests__/components/ErrorState.test.tsx` oluştur:
+- [x] Test önce — `__tests__/components/ErrorState.test.tsx` oluştur:
   ```tsx
   test('error state shows retry button', () => {
     const onRetry = jest.fn()
@@ -2152,13 +2189,22 @@
     expect(onRetry).toHaveBeenCalledTimes(1)
   })
   ```
-- [ ] Global error boundary bileşeni yaz
-- [ ] Her `useQuery` için error state UI: "Yüklenemedi. Tekrar dene" butonu
-- [ ] Empty state'ler:
-  - [ ] Konuşma listesi boşsa: "Henüz sohbet yok. Yeni bir sohbet başlat."
-  - [ ] Fact check geçmişi boşsa: "Henüz doğrulama yapmadınız."
-  - [ ] Saved articles boşsa: "Henüz makale kaydetmediniz."
-- [ ] 404 sayfası: `/app/not-found.tsx`
+- [x] Global error boundary bileşeni yaz
+- [x] Her `useQuery` için error state UI: "Yüklenemedi. Tekrar dene" butonu
+- [x] Empty state'ler:
+  - [x] Konuşma listesi boşsa: "Henüz sohbet yok. Yeni bir sohbet başlat."
+  - [x] Fact check geçmişi boşsa: "Henüz doğrulama yapmadınız."
+  - [x] Saved articles boşsa: "Henüz makale kaydetmediniz."
+- [x] 404 sayfası: `/app/not-found.tsx`
+
+**Ekstra Testler (Task 8.5 kapsamında eklendi):**
+- [x] `__tests__/components/chat/ConversationList.test.tsx` içine empty state senaryosu eklendi
+- [x] `__tests__/components/fact-check/RecentVerifications.test.tsx` empty state metni roadmap ile hizalandi
+- [x] `__tests__/components/chat/ChatPages.test.tsx` chat landing davranisina gore guncellendi
+
+**Doğrulama:**
+- [x] `npm test -- __tests__/components/ErrorState.test.tsx __tests__/components/chat/ConversationList.test.tsx __tests__/components/fact-check/RecentVerifications.test.tsx __tests__/components/news/SavedPage.test.tsx`
+- [x] `npm test -- __tests__/components/chat/ChatPages.test.tsx __tests__/components/news/TrendingPage.test.tsx __tests__/components/fact-check/RecentVerifications.test.tsx __tests__/components/ErrorState.test.tsx __tests__/components/chat/ConversationList.test.tsx __tests__/components/news/SavedPage.test.tsx`
 
 ---
 
@@ -2196,26 +2242,26 @@
 
 **Tahmini Süre:** 1 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `npm run build` hatasız tamamlanıyor
-- [ ] `npm test` → tüm Jest testleri geçiyor
-- [ ] `npm run test:e2e` → Playwright testleri geçiyor
-- [ ] `console.log`'ları temizle
-- [ ] `TODO` ve `FIXME` yorumlarını temizle
-- [ ] TypeScript hataları yok (`npm run build` hatasız)
-- [ ] ESLint uyarıları temizlendi
-- [ ] `next.config.ts`'de `NEXT_PUBLIC_API_URL` production URL'i ile güncelle
-- [ ] `README.md`'ye frontend kurulum adımları eklendi
+- [x] `npm run build` hatasız tamamlanıyor
+- [x] `npm test` → tüm Jest testleri geçiyor
+- [x] `npm run test:e2e` → Playwright testleri geçiyor
+- [x] `console.log`'ları temizle
+- [x] `TODO` ve `FIXME` yorumlarını temizle
+- [x] TypeScript hataları yok (`npm run build` hatasız)
+- [x] ESLint uyarıları temizlendi
+- [x] `next.config.ts`'de `NEXT_PUBLIC_API_URL` production URL'i ile güncelle
+- [x] `README.md`'ye frontend kurulum adımları eklendi
 
 ---
 
 ### 📊 Phase 8 Success Metrics
 
-- [ ] `npm run build` hatasız tamamlanıyor
-- [ ] `npm test` → tüm unit/component testleri geçiyor
-- [ ] `npm run test:e2e` → E2E senaryoları geçiyor (auth flow, chat, fact check)
+- [x] `npm run build` hatasız tamamlanıyor
+- [x] `npm test` → tüm unit/component testleri geçiyor
+- [x] `npm run test:e2e` → E2E senaryoları geçiyor (auth flow, chat, fact check)
 - [ ] Mobilde sidebar overlay çalışıyor
 - [ ] Tüm sayfalarda loading skeleton var
 - [ ] Tüm sayfalarda error state var
@@ -2228,13 +2274,13 @@
 
 | Phase | İçerik | Süre | Durum |
 |-------|--------|------|-------|
-| **Phase 1** | Project Setup & Layout | 1 hafta | ⬜ Beklemede |
-| **Phase 2** | Auth Ekranları | 1 hafta | ⬜ Beklemede |
-| **Phase 3** | Chat Sayfası (Screen 1) | 1.5 hafta | ⬜ Beklemede |
-| **Phase 4** | Fact Check Engine (Screen 2) | 0.5 hafta | ⬜ Beklemede |
-| **Phase 5** | News Feed (Screen 3) | 1 hafta | ⬜ Beklemede |
-| **Phase 6** | Trending (Screen 4) | 0.5 hafta | ⬜ Beklemede |
-| **Phase 7** | Category Sayfaları (Screen 5 & 6) | 1 hafta | ⬜ Beklemede |
+| **Phase 1** | Project Setup & Layout | 1 hafta | ✅ Tamamlandı |
+| **Phase 2** | Auth Ekranları | 1 hafta | ✅ Tamamlandı |
+| **Phase 3** | Chat Sayfası (Screen 1) | 1.5 hafta | ✅ Tamamlandı |
+| **Phase 4** | Fact Check Engine (Screen 2) | 0.5 hafta | ✅ Tamamlandı |
+| **Phase 5** | News Feed (Screen 3) | 1 hafta | ✅ Tamamlandı |
+| **Phase 6** | Trending (Screen 4) | 0.5 hafta | ✅ Tamamlandı |
+| **Phase 7** | Category Sayfaları (Screen 5 & 6) | 1 hafta | ✅ Tamamlandı |
 | **Phase 8** | Polish, Responsive & Deploy | 1 hafta | ⬜ Beklemede |
 | **TOPLAM** | | **~7.5 hafta** | |
 
@@ -2255,3 +2301,5 @@
 ---
 
 > *Backend roadmap: `docs/ROADMAP_BACKEND.md` — Frontend'e geçmeden önce backend Phase 1-3'ün tamamlanmış olması önerilir.*
+
+> *Nisan 2026 notu:* Backend tarafinda CrewAI ic yapisi YAML konfig tabanina tasindi. Bu degisiklik frontend endpoint contract'larini degistirmedigi icin Phase 6-8 bekleyen frontend tasklarini mevcut endpoint tablosuna gore ilerletebilirsin.

@@ -29,6 +29,6 @@ export const useAuthStore = create<AuthStore>()(
 			logout: () => set({ accessToken: null, user: null }),
 			isAuthenticated: () => !!get().accessToken,
 		}),
-		{ name: 'newsai-auth', partialize: (s) => ({ user: s.user }) },
+		{ name: 'newsai-auth', partialize: (s) => ({ accessToken: s.accessToken, user: s.user }) },
 	),
 );

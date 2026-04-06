@@ -15,6 +15,20 @@ export default function FactCheckPage() {
   const isAuthenticated = useAuthStore().isAuthenticated?.()
 
   const handleVerify = (claim: string) => {
+    if (!isAuthenticated) {
+      const mockVerdict: FactCheck = {
+        id: `guest-${Date.now()}`,
+        claim,
+        verdict: 'UNVERIFIED',
+        explanation: 'Quick guest-mode check: sign in for a full source-backed verification result.',
+        sources: [],
+        confidence_score: 0.5,
+        created_at: new Date().toISOString(),
+      }
+      setLastVerdict(mockVerdict)
+      return
+    }
+
     runFactCheck.mutate(claim, {
       onSuccess: (data) => {
         setLastVerdict(data)
@@ -51,6 +65,8 @@ export default function FactCheckPage() {
             <RecentVerifications
               verifications={history.data || []}
               isLoading={history.isLoading}
+              isError={history.isError}
+              onRetry={() => void history.refetch()}
             />
           </div>
         )}

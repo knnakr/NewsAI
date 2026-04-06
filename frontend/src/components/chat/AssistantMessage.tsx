@@ -12,7 +12,7 @@ type AssistantMessageProps = {
 
 export function AssistantMessage({ content, sources, isStreaming = false }: AssistantMessageProps) {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3" data-testid="assistant-message">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent-blue/30 bg-navy-800 text-accent-blue">
         <Bot className="h-4 w-4" aria-hidden="true" />
       </div>

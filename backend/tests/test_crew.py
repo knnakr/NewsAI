@@ -1,4 +1,4 @@
-"""Tests for CrewAI setup and tool initialization (Tasks 3.4 and 3.5)."""
+"""Tests for Crew service behavior, tools, and conversation routes."""
 
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -9,10 +9,6 @@ from pydantic import ValidationError
 from sqlalchemy import select
 
 from app.crew.hooks import on_tool_used
-from app.crew.agents.news_fetcher import create_groq_llm, create_news_fetcher_agent
-from app.crew.agents.news_analyst import create_news_analyst_agent
-from app.crew.news_crew import build_news_crew, run_news_crew
-from app.crew.tasks.news_tasks import create_analysis_task, create_fetch_task
 from app.crew.tools.summarize import SummarizeArticleTool
 from app.crew.utils import _context_stack, clear_tool_call_context, set_tool_call_context
 from app.crew.tools.web_search import WebSearchTool
@@ -75,45 +71,6 @@ def mock_stream_crew_service():
 		yield mock_run
 
 
-def test_create_news_fetcher_agent_returns_agent():
-	with patch("app.crew.agents.news_fetcher.LLM"):
-		agent = create_news_fetcher_agent(MagicMock())
-		assert agent is not None
-		assert agent.role == "News Fetcher"
-
-
-def test_news_fetcher_agent_has_web_search_tool():
-	with patch("app.crew.agents.news_fetcher.LLM"):
-		agent = create_news_fetcher_agent(MagicMock())
-		tool_names = [t.name for t in agent.tools]
-		assert "web_search" in tool_names
-
-
-def test_news_fetcher_agent_has_max_iter_set():
-	with patch("app.crew.agents.news_fetcher.LLM"):
-		agent = create_news_fetcher_agent(MagicMock())
-		assert agent.max_iter == 5
-
-
-def test_max_iter_prevents_infinite_loop():
-	with patch("app.crew.news_crew.LLM"):
-		crew = build_news_crew()
-		fetcher_agent = crew.agents[0]
-		assert fetcher_agent.max_iter == 5
-
-
-def test_create_groq_llm_handles_rate_limit_error():
-	with patch("app.crew.agents.news_fetcher.LLM", side_effect=Exception("RateLimitError: too many requests")):
-		with pytest.raises(RuntimeError, match="RateLimitError"):
-			create_groq_llm()
-
-
-def test_create_groq_llm_handles_api_connection_error():
-	with patch("app.crew.agents.news_fetcher.LLM", side_effect=Exception("APIConnectionError: network unavailable")):
-		with pytest.raises(RuntimeError, match="APIConnectionError"):
-			create_groq_llm()
-
-
 def test_web_search_tool_name_matches_enum():
 	tool = WebSearchTool()
 	assert tool.name == "web_search"
@@ -172,86 +129,7 @@ async def test_summarize_tool_handles_fetch_error():
 		assert "hata" in result.lower() or result == ""
 
 
-def test_news_analyst_agent_goal_includes_language():
-	agent = create_news_analyst_agent(MagicMock(), "English", "formal")
-	assert "English" in agent.goal
-
-
-def test_news_analyst_agent_goal_includes_tone():
-	agent = create_news_analyst_agent(MagicMock(), "Turkish", "casual")
-	assert "casual" in agent.goal
-
-
-def test_news_analyst_agent_has_summarize_tool():
-	agent = create_news_analyst_agent(MagicMock(), "Turkish", "neutral")
-	tool_names = [tool.name for tool in agent.tools]
-	assert "summarize_article" in tool_names
-
-
-def test_news_fetcher_agent_backstory_mentions_tavily():
-	agent = create_news_fetcher_agent(MagicMock())
-	assert "Tavily" in agent.backstory or len(agent.backstory) > 0
-
-
-def test_fetch_task_description_includes_user_message():
-	agent = create_news_fetcher_agent(MagicMock())
-	task = create_fetch_task(agent, "Tech news today", [])
-	assert "Tech news today" in task.description
-
-
-def test_fetch_task_includes_conversation_history():
-	agent = create_news_fetcher_agent(MagicMock())
-	history = [{"role": "user", "content": "previous question"}]
-	task = create_fetch_task(agent, "follow up", history)
-	assert "previous question" in task.description
-
-
-def test_fetch_task_limits_history_to_10_messages():
-	agent = create_news_fetcher_agent(MagicMock())
-	history = [{"role": "user", "content": f"msg {i}"} for i in range(20)]
-	task = create_fetch_task(agent, "new question", history)
-	assert "msg 0" not in task.description
-	assert "msg 19" in task.description
-
-
-def test_analysis_task_uses_fetch_task_as_context():
-	agent = create_news_analyst_agent(MagicMock(), "Turkish", "neutral")
-	fetch_task = create_fetch_task(create_news_fetcher_agent(MagicMock()), "initial question", [])
-	analysis_task = create_analysis_task(agent, fetch_task)
-	assert fetch_task in analysis_task.context
-
-
-def test_build_news_crew_returns_crew_with_2_agents():
-	with patch("app.crew.news_crew.LLM"):
-		crew = build_news_crew()
-		assert len(crew.agents) == 2
-
-
-@pytest.mark.asyncio
-async def test_run_news_crew_returns_result_raw():
-	with patch("app.crew.news_crew.LLM"):
-		with patch("app.crew.news_crew.Crew") as mock_crew_class:
-			mock_crew = MagicMock()
-			mock_crew.agents = [
-				create_news_fetcher_agent(MagicMock()),
-				create_news_analyst_agent(MagicMock(), "Turkish", "neutral"),
-			]
-			mock_crew.kickoff_async = AsyncMock(return_value=MagicMock(raw="crew raw output"))
-			mock_crew_class.return_value = mock_crew
-
-			result = await run_news_crew(
-				user_message="latest tech news",
-				conversation_history=[],
-				language="Turkish",
-				ai_tone="neutral",
-			)
-
-			assert result == "crew raw output"
-
-
 def test_set_tool_call_context_stores_message_id():
-	import uuid
-
 	message_id = uuid.uuid4()
 	set_tool_call_context(message_id, MagicMock(), uuid.uuid4())
 	assert _context_stack["message_id"] == message_id
@@ -329,7 +207,10 @@ async def test_tool_call_failure_logged_with_is_success_false(db):
 
 @pytest.mark.asyncio
 async def test_run_chat_crew_returns_string_and_sources():
-	with patch("app.services.crew_service.run_news_crew", new=AsyncMock(return_value="Tech recap: https://example.com/a")):
+	with patch("app.services.crew_service.CrewFactory.create_news_crew") as mock_factory:
+		mock_factory.return_value = SimpleNamespace(
+			kickoff_async=AsyncMock(return_value=SimpleNamespace(raw="Tech recap: https://example.com/a"))
+		)
 		result, sources = await run_chat_crew(
 			user_message="Tech news?",
 			conversation_history=[],
@@ -344,8 +225,10 @@ async def test_run_chat_crew_returns_string_and_sources():
 
 @pytest.mark.asyncio
 async def test_run_chat_crew_uses_language_from_preferences():
-	mock_run_news_crew = AsyncMock(return_value="News summary")
-	with patch("app.services.crew_service.run_news_crew", new=mock_run_news_crew):
+	with patch("app.services.crew_service.CrewFactory.create_news_crew") as mock_factory:
+		mock_factory.return_value = SimpleNamespace(
+			kickoff_async=AsyncMock(return_value=SimpleNamespace(raw="News summary"))
+		)
 		await run_chat_crew(
 			user_message="News?",
 			conversation_history=[],
@@ -354,11 +237,11 @@ async def test_run_chat_crew_uses_language_from_preferences():
 			message_id=uuid.uuid4(),
 		)
 
-		mock_run_news_crew.assert_awaited_once_with(
-			"News?",
-			[],
-			"English",
-			"formal",
+		mock_factory.assert_called_once_with(
+			user_message="News?",
+			conversation_history=[],
+			language="English",
+			ai_tone="formal",
 			step_callback=None,
 		)
 
@@ -430,6 +313,38 @@ async def test_send_message_creates_user_and_assistant_messages(client, auth_hea
 
 	assert response.status_code == 200
 	assert response.json()["role"] == "assistant"
+
+
+@pytest.mark.asyncio
+async def test_send_message_with_empty_content_returns_422(client, auth_headers):
+	create_resp = await client.post("/conversations", headers=auth_headers)
+	conv_id = create_resp.json()["id"]
+
+	response = await client.post(
+		f"/conversations/{conv_id}/messages",
+		json={"content": ""},
+		headers=auth_headers,
+	)
+
+	assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_send_message_returns_502_on_news_analyst_timeout(client, auth_headers):
+	create_resp = await client.post("/conversations", headers=auth_headers)
+	conv_id = create_resp.json()["id"]
+
+	with patch(
+		"app.routers.conversations.run_chat_crew",
+		new=AsyncMock(side_effect=TimeoutError("NewsAnalystAgent timeout")),
+	):
+		response = await client.post(
+			f"/conversations/{conv_id}/messages",
+			json={"content": "Latest news?"},
+			headers=auth_headers,
+		)
+
+	assert response.status_code == 502
 
 
 @pytest.mark.asyncio

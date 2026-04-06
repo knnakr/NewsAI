@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	ChevronLeft,
 	ChevronRight,
+	Bookmark,
 	LogOut,
 	Menu,
 	MessageSquare,
@@ -43,14 +44,13 @@ export function Sidebar() {
 	const user = useAuthStore((state) => state.user);
 	const logout = useLogout();
 
-	useEffect(() => {
-		if (!logout.isSuccess) return;
-		setIsMobileOpen(false);
-		router.push("/login");
-	}, [logout.isSuccess, router]);
-
 	const handleLogout = () => {
-		logout.mutate();
+		logout.mutate(undefined, {
+			onSuccess: () => {
+				setIsMobileOpen(false);
+				router.push("/login");
+			},
+		});
 	};
 
 	const handleMobileToggle = () => {
@@ -166,8 +166,37 @@ export function Sidebar() {
 							<span className="truncate">{user?.display_name || "Guest User"}</span>
 						</div>
 					)}
+					<Link
+						href="/saved"
+						className={cn(
+							"mb-2 flex w-full items-center gap-2 rounded-md border-l-2 px-3 py-2 text-sm text-slate-200 transition-colors",
+							pathname === "/saved"
+								? "border-accent-blue bg-navy-600"
+								: "border-transparent hover:bg-navy-800",
+							sidebarCollapsed && "justify-center px-2",
+						)}
+						onClick={closeMobileSidebar}
+					>
+						<Bookmark className="h-4 w-4" />
+						{!sidebarCollapsed && <span>Saved</span>}
+					</Link>
+					<Link
+						href="/settings"
+						className={cn(
+							"mb-2 flex w-full items-center gap-2 rounded-md border-l-2 px-3 py-2 text-sm text-slate-200 transition-colors",
+							pathname === "/settings"
+								? "border-accent-blue bg-navy-600"
+								: "border-transparent hover:bg-navy-800",
+							sidebarCollapsed && "justify-center px-2",
+						)}
+						onClick={closeMobileSidebar}
+					>
+						<Settings className="h-4 w-4" />
+						{!sidebarCollapsed && <span>Settings</span>}
+					</Link>
 					<button
 						type="button"
+						data-testid="logout-button"
 						onClick={handleLogout}
 						disabled={logout.isPending}
 						className={cn(

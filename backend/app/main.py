@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import AsyncSessionLocal, get_db
 from app.middleware.logging import logging_middleware
+from app.middleware.rate_limiter import rate_limit_middleware
 from app.routers import auth, conversations, fact_check, news, users
 from app.utils.cache import run_cleanup
 
@@ -37,8 +38,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="News AI API",
-    description="AI-powered news platform with CrewAI agents",
+    description="AI-powered news platform with CrewAI agents (News Crew + Fact Check Crew)",
     version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {"name": "auth", "description": "Kayıt, giriş, token yönetimi"},
+        {"name": "users", "description": "Kullanıcı profili ve tercihler"},
+        {"name": "conversations", "description": "Chat konuşmaları ve News Crew"},
+        {"name": "fact-check", "description": "Fact Check Crew"},
+        {"name": "news", "description": "Haber feed, trending, kategori, kayıt"},
+    ],
     lifespan=lifespan,
 )
 
@@ -50,6 +60,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(logging_middleware)
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -98,7 +109,12 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Health check",
+    description="Veritabanı bağlantısını doğrulayan sağlık kontrolü endpoint'i.",
+    status_code=200,
+)
 async def health_check(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     try:
         await db.execute(text("SELECT 1"))

@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuthStore } from "@/stores/authStore";
 import { Spinner } from "@/components/ui/Spinner";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 	const [isChecking, setIsChecking] = useState(true);
+	const isPublicRoute = pathname === "/fact-check";
 
 	useEffect(() => {
 		const timer = window.setTimeout(() => {
-			if (!isAuthenticated()) {
+			if (!isAuthenticated() && !isPublicRoute) {
 				router.replace("/login");
 			}
 			setIsChecking(false);
@@ -22,7 +24,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 		return () => {
 			window.clearTimeout(timer);
 		};
-	}, [isAuthenticated, router]);
+	}, [isAuthenticated, isPublicRoute, router]);
 
 	if (isChecking) {
 		return (
@@ -32,7 +34,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 		);
 	}
 
-	if (!isAuthenticated()) {
+	if (!isAuthenticated() && !isPublicRoute) {
 		return null;
 	}
 

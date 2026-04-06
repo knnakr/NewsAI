@@ -38,6 +38,7 @@ export function WelcomeScreen({ onSuggestClick, visible = true }: WelcomeScreenP
             <Button
               key={question}
               type="button"
+              data-testid="suggested-question"
               variant="secondary"
               onClick={() => onSuggestClick(question)}
               className="h-auto min-h-24 flex-col items-start justify-start whitespace-normal rounded-xl border border-navy-600 bg-navy-700 p-4 text-left text-sm font-normal text-slate-100 hover:border-accent-blue hover:bg-navy-600"

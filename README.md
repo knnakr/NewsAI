@@ -49,6 +49,22 @@ docker compose up -d                       # yeniden başlat
 docker compose exec api python -m alembic stamp head  # versiyonu işaretle
 ```
 
+### Frontend Kurulum Adımları
+
+```bash
+# 1. Frontend bağımlılıklarını kur
+cd frontend
+npm install
+
+# 2. Frontend geliştirme sunucusunu başlat
+npm run dev
+
+# 3. Tarayıcıdan kontrol et
+# http://localhost:3000
+```
+
+Frontend geliştirme sırasında backend için `http://localhost:8001` kullanılır.
+
 ---
 
 ## Servisler

@@ -13,6 +13,16 @@ class RegisterRequest(BaseModel):
     password: str
     display_name: str
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "password": "securepass123",
+                "display_name": "John Doe",
+            }
+        }
+    )
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, v):
@@ -35,12 +45,31 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "password": "securepass123",
+            }
+        }
+    )
+
 
 class TokenResponse(BaseModel):
     """Response schema for authentication tokens."""
     access_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "access_token": "eyJhbGciOi...",
+                "token_type": "bearer",
+                "expires_in": 900,
+            }
+        }
+    )
 
 
 class UserResponse(BaseModel):
@@ -52,12 +81,28 @@ class UserResponse(BaseModel):
     email_verified_at: Optional[datetime] = None
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": "11111111-1111-1111-1111-111111111111",
+                "email": "user@example.com",
+                "display_name": "John Doe",
+                "role": "user",
+                "email_verified_at": None,
+                "created_at": "2026-04-05T12:00:00Z",
+            }
+        },
+    )
 
 
 class UpdateUserRequest(BaseModel):
     """Request schema for updating user profile."""
     display_name: Optional[str] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"display_name": "Updated Name"}}
+    )
 
     @field_validator("display_name")
     @classmethod
@@ -75,7 +120,17 @@ class UserPreferencesResponse(BaseModel):
     news_categories: List[str]
     email_digest: bool
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "language": "Turkish",
+                "ai_tone": "neutral",
+                "news_categories": ["world", "technology"],
+                "email_digest": False,
+            }
+        },
+    )
 
 
 class UpdatePreferencesRequest(BaseModel):
@@ -84,6 +139,17 @@ class UpdatePreferencesRequest(BaseModel):
     ai_tone: Optional[str] = None
     news_categories: Optional[List[str]] = None
     email_digest: Optional[bool] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "language": "English",
+                "ai_tone": "formal",
+                "news_categories": ["technology"],
+                "email_digest": True,
+            }
+        }
+    )
 
     @field_validator("ai_tone")
     @classmethod

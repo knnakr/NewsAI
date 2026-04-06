@@ -52,7 +52,7 @@ describe('RecentVerifications', () => {
 
   test('shows empty message when no verifications', () => {
     render(<RecentVerifications verifications={[]} isLoading={false} />)
-    expect(screen.getByText(/no verifications|empty/i)).toBeInTheDocument()
+    expect(screen.getByText(/Henüz doğrulama yapmadınız\./i)).toBeInTheDocument()
   })
 
   test('truncates long claims', () => {

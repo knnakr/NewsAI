@@ -156,18 +156,17 @@ Phase 1 tamamlanmış sayılır eğer:
   │   │   └── cache_service.py
   │   ├── crew/
   │   │   ├── __init__.py
-  │   │   ├── news_crew.py
-  │   │   ├── fact_check_crew.py
-  │   │   ├── agents/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── news_fetcher.py
-  │   │   │   ├── news_analyst.py
-  │   │   │   ├── fact_checker.py
-  │   │   │   └── verdict_agent.py
-  │   │   ├── tasks/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── news_tasks.py
-  │   │   │   └── fact_check_tasks.py
+    │   │   ├── crew_factory.py
+    │   │   ├── tool_registry.py
+    │   │   ├── config/
+    │   │   │   ├── __init__.py
+    │   │   │   ├── agents.yaml
+    │   │   │   ├── tasks.yaml
+    │   │   │   ├── crews.yaml
+    │   │   │   ├── crew_schema.py
+    │   │   │   ├── agents_loader.py
+    │   │   │   ├── tasks_loader.py
+    │   │   │   └── crews_loader.py
   │   │   ├── tools/
   │   │   │   ├── __init__.py
   │   │   │   ├── web_search.py
@@ -175,10 +174,9 @@ Phase 1 tamamlanmış sayılır eğer:
   │   │   │   ├── fetch_trending.py
   │   │   │   ├── fact_check_search.py
   │   │   │   └── summarize.py
-  │   │   └── prompts/
-  │   │       ├── __init__.py
-  │   │       ├── news_prompts.py
-  │   │       └── fact_check_prompts.py
+    │   │   ├── hooks.py
+    │   │   ├── llm_config.py
+    │   │   └── utils.py
   │   ├── middleware/
   │   │   ├── __init__.py
   │   │   ├── logging.py
@@ -1220,6 +1218,8 @@ Phase 1 tamamlanmış sayılır eğer:
 
 ## 🎯 Phase 3 Overview — CrewAI Core
 
+> **Nisan 2026 Revizyonu (kritik):** CrewAI implementasyonu tamamen YAML konfig tabanina tasindi. Ajan/task/crew tanimlari `app/crew/config/*.yaml` uzerinden yukleniyor. Bu bolumde kalan bazi eski kod snippetleri tarihsel kayit amaclidir; uygulamada aktif yol `CrewFactory + YAML loaders` yapisidir.
+
 ### Mimari: İki Crew, Dört Agent
 
 Bu projede tek bir ReAct agent yerine **CrewAI** kullanılıyor. İki ayrı crew tanımlanıyor:
@@ -1277,18 +1277,18 @@ Bu projede tek bir ReAct agent yerine **CrewAI** kullanılıyor. İki ayrı crew
 
 ### Definition of Done
 
-- [ ] Kullanıcı mesaj gönderdiğinde News Crew tetikleniyor
-- [ ] `NewsFetcherAgent` Tavily ile web araması yapıyor
-- [ ] `NewsAnalystAgent` sonuçları işleyip yanıt üretiyor
-- [ ] Her tool çağrısı `agent_tool_calls` tablosuna kaydediliyor
-- [ ] Konuşma geçmişi doğru şekilde context'e dahil ediliyor
-- [ ] `pytest tests/test_crew.py` → tüm testler geçiyor, coverage >= %80
+- [x] Kullanıcı mesaj gönderdiğinde News Crew tetikleniyor
+- [x] `NewsFetcherAgent` Tavily ile web araması yapıyor
+- [x] `NewsAnalystAgent` sonuçları işleyip yanıt üretiyor
+- [x] Her tool çağrısı `agent_tool_calls` tablosuna kaydediliyor
+- [x] Konuşma geçmişi doğru şekilde context'e dahil ediliyor
+- [x] `pytest tests/test_crew.py` → tüm testler geçiyor, coverage >= %80
 
 ---
 
 ## 📅 Week 3 (ikinci yarı): CrewAI Altyapısı & Tool Sistemi
 
-**Hedef:** Groq LLM bağlantısı, CrewAI tool'ları, News Crew agent'ları ve task tanımları
+**Hedef:** Groq LLM bağlantısı, CrewAI tool'ları ve YAML konfig tabanli crew/agent/task altyapısı
 
 ---
 
@@ -2043,13 +2043,13 @@ Bu projede tek bir ReAct agent yerine **CrewAI** kullanılıyor. İki ayrı crew
 
 ### 📊 Phase 3 Success Metrics
 
-- [ ] `POST /conversations/{id}/messages` → News Crew tetikleniyor
-- [ ] Haber sorusu sorulduğunda `NewsFetcherAgent` Tavily'i kullanıyor
-- [ ] `NewsAnalystAgent` fetcher çıktısını alıp yanıt üretiyor
-- [ ] `agent_tool_calls` tablosunda her tool çağrısı için kayıt oluşuyor
-- [ ] Konuşma geçmişi fetch task context'ine dahil ediliyor
-- [ ] Silinmiş konuşma GET isteğinde 404 dönüyor
-- [ ] `pytest tests/test_crew.py` → tüm testler geçiyor, coverage >= %80
+- [x] `POST /conversations/{id}/messages` → News Crew tetikleniyor
+- [x] Haber sorusu sorulduğunda `NewsFetcherAgent` Tavily'i kullanıyor
+- [x] `NewsAnalystAgent` fetcher çıktısını alıp yanıt üretiyor
+- [x] `agent_tool_calls` tablosunda her tool çağrısı için kayıt oluşuyor
+- [x] Konuşma geçmişi fetch task context'ine dahil ediliyor
+- [x] Silinmiş konuşma GET isteğinde 404 dönüyor
+- [x] `pytest tests/test_crew.py` → tüm testler geçiyor, coverage >= %80
 
 ---
 
@@ -2550,16 +2550,18 @@ Bu projede tek bir ReAct agent yerine **CrewAI** kullanılıyor. İki ayrı crew
 
 ### 📊 Phase 4 Success Metrics
 
-- [ ] `GET /news/feed?category=technology&period=today` → article listesi döndürüyor
-- [ ] Aynı istek 6 saat içinde tekrarlandığında `article_cache.request_count` artıyor
-- [ ] NewsAPI limiti doluyken RSS fallback devreye giriyor
-- [ ] Chat'te "teknoloji haberlerini getir" denilince `NewsFetcherAgent`, `fetch_news_by_category` tool'unu çağırıyor
-- [ ] APScheduler her 6 saatte cleanup çalıştırıyor
+- [x] `GET /news/feed?category=technology&period=today` → article listesi döndürüyor
+- [x] Aynı istek 6 saat içinde tekrarlandığında `article_cache.request_count` artıyor
+- [x] NewsAPI limiti doluyken RSS fallback devreye giriyor
+- [x] Chat'te "teknoloji haberlerini getir" denilince `NewsFetcherAgent`, `fetch_news_by_category` tool'unu çağırıyor
+- [x] APScheduler her 6 saatte cleanup çalıştırıyor
 - [x] `pytest tests/test_news.py` → tüm testler geçiyor
 
 ---
 
 ## 🎯 Phase 5 Overview — Fact Check Crew
+
+> **Nisan 2026 Revizyonu (kritik):** Fact check crew de YAML tabanli akisa tasindi. Servis katmani `CrewFactory.create_fact_check_crew()` ile konfigleri yukleyip calistiriyor.
 
 ### Mimari
 
@@ -2594,11 +2596,11 @@ POST /fact-check {"claim": "..."}
 
 ### Definition of Done
 
-- [ ] `POST /fact-check` endpoint çalışıyor, TRUE/FALSE/UNVERIFIED döndürüyor
-- [ ] Her fact check `fact_checks` tablosuna kaydediliyor
-- [ ] Giriş yapmamış kullanıcı da fact check yapabiliyor (`user_id = NULL`)
-- [ ] Geçmiş endpoint'i çalışıyor
-- [ ] `pytest tests/test_fact_check.py` → tüm testler geçiyor, coverage >= %80
+- [x] `POST /fact-check` endpoint çalışıyor, TRUE/FALSE/UNVERIFIED döndürüyor
+- [x] Her fact check `fact_checks` tablosuna kaydediliyor
+- [x] Giriş yapmamış kullanıcı da fact check yapabiliyor (`user_id = NULL`)
+- [x] Geçmiş endpoint'i çalışıyor
+- [x] `pytest tests/test_fact_check.py` → tüm testler geçiyor, coverage >= %80
 
 ---
 
@@ -2948,10 +2950,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 2 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_news.py`'e saved article testleri ekle:
+- [x] Test önce — `tests/test_news.py`'e saved article testleri ekle:
   ```python
   async def test_save_article_returns_201(client, auth_headers):
       response = await client.post("/news/saved", json={
@@ -2987,11 +2989,13 @@ POST /fact-check {"claim": "..."}
       response = await client.post("/news/saved", json={"title": "T", "url": "http://t.com", "source_name": "S", "category": "technology"})
       assert response.status_code == 401
   ```
-- [ ] `app/routers/news.py`'ye saved article endpoint'leri ekle:
-  - [ ] `GET /news/saved` → kullanıcının kaydettiği haberler
-  - [ ] `POST /news/saved` → makale kaydet (URL + metadata)
-  - [ ] `DELETE /news/saved/{id}` → kaydı sil
-  - [ ] Aynı URL'yi iki kez kaydetme → 409 (UNIQUE constraint yakalanır)
+- [x] `app/routers/news.py`'ye saved article endpoint'leri ekle:
+    - [x] `GET /news/saved` → kullanıcının kaydettiği haberler
+    - [x] `POST /news/saved` → makale kaydet (URL + metadata)
+    - [x] `DELETE /news/saved/{id}` → kaydı sil
+    - [x] Aynı URL'yi iki kez kaydetme → 409 (UNIQUE constraint yakalanır)
+
+> **Doğrulama:** `python -m pytest tests/test_news.py -v` çalıştırıldı → **28/28 test geçti** ✅
 
 ---
 
@@ -2999,10 +3003,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_auth.py`'e agent entegrasyon testleri ekle:
+- [x] Test önce — `tests/test_auth.py`'e agent entegrasyon testleri ekle:
   ```python
   async def test_news_analyst_goal_changes_with_language_preference(client, auth_headers, mock_crew_service):
       await client.patch("/users/me/preferences", json={"language": "English"}, headers=auth_headers)
@@ -3016,7 +3020,7 @@ POST /fact-check {"claim": "..."}
       # Chat mesajı gönder, tone kontrolü yap
       ...
   ```
-- [ ] Konuşma mesajı gönderilirken kullanıcının tercihlerinin `crew_service`'e geçildiğini doğrula:
+- [x] Konuşma mesajı gönderilirken kullanıcının tercihlerinin `crew_service`'e geçildiğini doğrula:
   ```python
   # app/routers/conversations.py mesaj endpoint'inde
   user_prefs = await db.get(UserPreferences, current_user.id)
@@ -3032,36 +3036,43 @@ POST /fact-check {"claim": "..."}
   )
   ```
 
+> **Doğrulama:** `python -m pytest tests/test_auth.py -k "news_analyst_goal_changes" -v` çalıştırıldı → **2/2 test geçti** ✅
+
 ---
 
 ### Task 7.3: User Features Testleri (TDD Tamamlama)
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] `tests/test_news.py` saved article test case'lerinin geçtiğini doğrula:
-  - [ ] `test_save_article_returns_201`
-  - [ ] `test_save_same_article_twice_returns_409`
-  - [ ] `test_get_saved_articles_returns_only_current_user`
-  - [ ] `test_delete_saved_article_removes_from_db`
-  - [ ] `test_save_article_requires_auth`
-- [ ] `tests/test_auth.py` preferences test case'lerinin geçtiğini doğrula:
-  - [ ] `test_get_preferences_returns_defaults`
-  - [ ] `test_patch_preferences_updates_language`
-  - [ ] `test_patch_preferences_invalid_ai_tone_returns_422`
-  - [ ] `test_news_analyst_goal_changes_with_language_preference`
+- [x] `tests/test_news.py` saved article test case'lerinin geçtiğini doğrula:
+    - [x] `test_save_article_returns_201`
+    - [x] `test_save_same_article_twice_returns_409`
+    - [x] `test_get_saved_articles_returns_only_current_user`
+    - [x] `test_delete_saved_article_removes_from_db`
+    - [x] `test_save_article_requires_auth`
+- [x] `tests/test_auth.py` preferences test case'lerinin geçtiğini doğrula:
+    - [x] `test_get_preferences_returns_defaults`
+    - [x] `test_patch_preferences_updates_language`
+    - [x] `test_patch_preferences_invalid_ai_tone_returns_422`
+    - [x] `test_news_analyst_goal_changes_with_language_preference`
+    - [x] Ekstra: `test_news_analyst_goal_changes_with_tone_preference`
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_news.py::test_save_article_returns_201 tests/test_news.py::test_save_same_article_twice_returns_409 tests/test_news.py::test_get_saved_articles_returns_only_current_user tests/test_news.py::test_delete_saved_article_removes_from_db tests/test_news.py::test_save_article_requires_auth tests/test_auth.py::test_get_preferences_returns_defaults tests/test_auth.py::test_patch_preferences_updates_language tests/test_auth.py::test_patch_preferences_invalid_ai_tone_returns_422 tests/test_auth.py::test_news_analyst_goal_changes_with_language_preference tests/test_auth.py::test_news_analyst_goal_changes_with_tone_preference -v` → **10/10 test geçti** ✅
+> - `python -m pytest tests/test_news.py tests/test_auth.py -v` → **80/80 test geçti** ✅
 
 ---
 
 ### 📊 Phase 6 Success Metrics
 
-- [ ] `POST /news/saved` → makale kaydediliyor
-- [ ] Aynı makale tekrar kaydedilmeye çalışılınca 409
-- [ ] `PATCH /users/me/preferences` ile `language=English` ayarlanınca agent İngilizce yanıt üretiyor
-- [ ] `PATCH /users/me/preferences` ile `ai_tone=formal` ayarlanınca `NewsAnalystAgent` goal'u değişiyor
-- [ ] Phase 6 testleri geçiyor
+- [x] `POST /news/saved` → makale kaydediliyor
+- [x] Aynı makale tekrar kaydedilmeye çalışılınca 409
+- [x] `PATCH /users/me/preferences` ile `language=English` ayarlanınca agent İngilizce yanıt üretiyor
+- [x] `PATCH /users/me/preferences` ile `ai_tone=formal` ayarlanınca `NewsAnalystAgent` goal'u değişiyor
+- [x] Phase 6 testleri geçiyor
 
 ---
 
@@ -3076,10 +3087,10 @@ POST /fact-check {"claim": "..."}
 
 ### Definition of Done
 
-- [ ] `GET /news/trending` çalışıyor
-- [ ] `GET /news/category/{category}` çalışıyor
+- [x] `GET /news/trending` çalışıyor
+- [x] `GET /news/category/{category}` çalışıyor
 - [ ] Agent "ne trending?" sorusuna `FetchTrendingTool` ile cevap veriyor
-- [ ] Phase 7 testleri geçiyor
+- [x] Phase 7 testleri geçiyor
 
 ---
 
@@ -3091,10 +3102,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_news.py`'e ekle:
+- [x] Test önce — `tests/test_news.py`'e ekle:
   ```python
   async def test_get_trending_returns_article_list(client, mock_newsapi):
       response = await client.get("/news/trending")
@@ -3112,9 +3123,13 @@ POST /fact-check {"claim": "..."}
       count = result.scalar() or 0
       assert count >= 1
   ```
-- [ ] `app/routers/news.py`'ye ekle:
-  - [ ] `GET /news/trending` → `view_count DESC` sıralı makale listesi, opsiyonel `topic` filtresi
-  - [ ] `view_count` cache hit'lerinden türetilir
+- [x] `app/routers/news.py`'ye ekle:
+    - [x] `GET /news/trending` → `view_count DESC` sıralı makale listesi, opsiyonel `topic` filtresi
+    - [x] `view_count` cache hit'lerinden türetilir
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_news.py -k "trending" -v` → **4/4 test geçti** ✅
+> - `python -m pytest tests/test_news.py -v` → **31/31 test geçti** ✅
 
 ---
 
@@ -3122,10 +3137,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_news.py`'e ekle:
+- [x] Test önce — `tests/test_news.py`'e ekle:
   ```python
   async def test_get_category_news_returns_article_list(client, mock_newsapi):
       response = await client.get("/news/category/technology")
@@ -3145,9 +3160,13 @@ POST /fact-check {"claim": "..."}
       assert response.status_code == 200
       assert len(response.json()) <= 5
   ```
-- [ ] `app/routers/news.py`'ye ekle:
-  - [ ] `GET /news/category/{category}` → kategori haberleri, opsiyonel `subcategory`, `page`, `page_size` parametreleri
-  - [ ] Geçersiz kategori → 422
+- [x] `app/routers/news.py`'ye ekle:
+    - [x] `GET /news/category/{category}` → kategori haberleri, opsiyonel `subcategory`, `page`, `page_size` parametreleri
+    - [x] Geçersiz kategori → 422
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_news.py -k "category_news" -v` → **4/4 test geçti** ✅
+> - `python -m pytest tests/test_news.py -v` → **35/35 test geçti** ✅
 
 ---
 
@@ -3155,26 +3174,30 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] `tests/test_news.py` trending & category test case'lerinin geçtiğini doğrula:
-  - [ ] `test_get_trending_returns_article_list`
-  - [ ] `test_get_trending_with_topic_filter`
-  - [ ] `test_get_category_news_returns_article_list`
-  - [ ] `test_get_category_news_invalid_category_returns_422`
-  - [ ] `test_get_category_news_with_subcategory_filter`
-  - [ ] `test_get_category_news_pagination`
+- [x] `tests/test_news.py` trending & category test case'lerinin geçtiğini doğrula:
+    - [x] `test_get_trending_returns_article_list`
+    - [x] `test_get_trending_with_topic_filter`
+    - [x] `test_get_category_news_returns_article_list`
+    - [x] `test_get_category_news_invalid_category_returns_422`
+    - [x] `test_get_category_news_with_subcategory_filter`
+    - [x] `test_get_category_news_pagination`
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_news.py::test_get_trending_returns_article_list tests/test_news.py::test_get_trending_with_topic_filter tests/test_news.py::test_get_category_news_returns_article_list tests/test_news.py::test_get_category_news_invalid_category_returns_422 tests/test_news.py::test_get_category_news_with_subcategory_filter tests/test_news.py::test_get_category_news_pagination -v` → **6/6 test geçti** ✅
+> - `python -m pytest tests/test_news.py -v` → **35/35 test geçti** ✅
 
 ---
 
 ### 📊 Phase 7 Success Metrics
 
-- [ ] `GET /news/trending` → `view_count DESC` sıralı makale listesi
-- [ ] `GET /news/category/sports?subcategory=football` → football haberleri
+- [x] `GET /news/trending` → `view_count DESC` sıralı makale listesi
+- [x] `GET /news/category/sports?subcategory=football` → football haberleri
 - [ ] `NewsFetcherAgent` "şu an ne trending?" sorusunda `FetchTrendingTool`'u kullanıyor
-- [ ] Cache hit sonrası `article_cache.view_count` artıyor
-- [ ] Phase 7 testleri geçiyor
+- [x] Cache hit sonrası `article_cache.view_count` artıyor
+- [x] Phase 7 testleri geçiyor
 
 ---
 
@@ -3208,10 +3231,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ YAPILDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_e2e.py`'e rate limit testleri ekle:
+- [x] Test önce — `tests/test_e2e.py`'e rate limit testleri ekle:
   ```python
   async def test_rate_limit_returns_429_after_threshold(client):
       for _ in range(11):
@@ -3224,7 +3247,7 @@ POST /fact-check {"claim": "..."}
           response = await client.get("/health")
       assert response.status_code == 200
   ```
-- [ ] `app/middleware/rate_limiter.py` oluştur:
+- [x] `app/middleware/rate_limiter.py` oluştur:
   ```python
   from fastapi import Request, HTTPException
   from collections import defaultdict
@@ -3245,11 +3268,15 @@ POST /fact-check {"claim": "..."}
           _request_counts[client_ip].append(now)
       return await call_next(request)
   ```
-- [ ] `app/main.py`'ye middleware olarak ekle:
+- [x] `app/main.py`'ye middleware olarak ekle:
   ```python
   from app.middleware.rate_limiter import rate_limit_middleware
   app.middleware("http")(rate_limit_middleware)
   ```
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_e2e.py -v` → **2/2 test geçti** ✅
+> - `python -m pytest tests/test_auth.py -v` → **52/52 test geçti** ✅
 
 ---
 
@@ -3257,10 +3284,10 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 2 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] Test önce — `tests/test_e2e.py`'e güvenlik testleri ekle:
+- [x] Test önce — `tests/test_e2e.py`'e güvenlik testleri ekle:
   ```python
   async def test_hashed_password_not_in_user_response(client, auth_headers):
       response = await client.get("/users/me", headers=auth_headers)
@@ -3280,11 +3307,15 @@ POST /fact-check {"claim": "..."}
       assert response.status_code in (200, 422)
       assert "error" not in str(response.json()).lower() or response.status_code == 422
   ```
-- [ ] Response şemalarından `hashed_password`, `token_hash` alanlarının dışlandığını doğrula (zaten `model_config` ile yapılmış olmalı)
-- [ ] CORS middleware'in `settings.ALLOWED_ORIGINS` ile kısıtlandığını doğrula
-- [ ] SQL injection koruması: tüm sorgularda ORM parametrik yapılar kullanılıyor, raw SQL yok
-- [ ] `.env` dosyasının `.gitignore`'da olduğunu doğrula
-- [ ] `JWT_SECRET` minimum 32 karakter kısıtlaması ekle (`config.py`'de validator)
+- [x] Response şemalarından `hashed_password`, `token_hash` alanlarının dışlandığını doğrula (zaten `model_config` ile yapılmış olmalı)
+- [x] CORS middleware'in `settings.ALLOWED_ORIGINS` ile kısıtlandığını doğrula
+- [x] SQL injection koruması: tüm sorgularda ORM parametrik yapılar kullanılıyor, raw SQL yok
+- [x] `.env` dosyasının `.gitignore`'da olduğunu doğrula
+- [x] `JWT_SECRET` minimum 32 karakter kısıtlaması ekle (`config.py`'de validator)
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_e2e.py::test_hashed_password_not_in_user_response tests/test_e2e.py::test_token_hash_not_in_any_response tests/test_e2e.py::test_cors_disallows_unknown_origins tests/test_e2e.py::test_sql_injection_attempt_returns_safe_response -v` → **4/4 test geçti** ✅
+> - `python -m pytest tests/test_auth.py::test_settings_rejects_short_jwt_secret -v` → **1/1 test geçti** ✅
 
 ---
 
@@ -3292,11 +3323,11 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 3 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `tests/test_e2e.py` oluştur:
-  - [ ] **Senaryo 1: Tam Chat Akışı (News Crew)**
+- [x] `tests/test_e2e.py` oluştur:
+    - [x] **Senaryo 1: Tam Chat Akışı (News Crew)**
     1. Kullanıcı kayıt olur
     2. Giriş yapar, token alır
     3. Yeni konuşma oluşturur
@@ -3306,24 +3337,28 @@ POST /fact-check {"claim": "..."}
     7. Takip sorusu sorar → geçmiş context'e dahil edilir
     8. Konuşmayı arşivler
 
-  - [ ] **Senaryo 2: Fact Check Akışı (Fact Check Crew)**
+    - [x] **Senaryo 2: Fact Check Akışı (Fact Check Crew)**
     1. Giriş yapmadan fact check isteği atar
     2. `FactCheckerAgent` araştırır, `VerdictAgent` karar verir (mock)
     3. `user_id = NULL` ile kaydediliyor
     4. Giriş yapar, aynı claim'i tekrar fact check eder
     5. Bu sefer `user_id` dolu kaydediliyor
 
-  - [ ] **Senaryo 3: Article Cache Akışı**
+    - [x] **Senaryo 3: Article Cache Akışı**
     1. `GET /news/feed?category=technology` → NewsAPI çağrılır, cache'e yazılır
     2. Aynı istek tekrarlanır → cache hit, NewsAPI çağrılmaz
     3. Cache expire olur (mock ile) → yeniden NewsAPI çağrılır
 
-  - [ ] **Senaryo 4: Auth Güvenlik Akışı**
+    - [x] **Senaryo 4: Auth Güvenlik Akışı**
     1. 5 hatalı giriş → hesap kilitlenir
     2. Doğru şifre ile giriş denenir → 423
     3. 15 dakika sonra (mock ile) kilit kalkar
     4. Token refresh → eski token revoke edilir
     5. Eski token ile refresh denenir → 401
+
+> **Doğrulama:**
+> - `python -m pytest tests/test_e2e.py -k "scenario_" -v` → **4/4 senaryo testi geçti** ✅
+> - `python -m pytest tests/test_e2e.py -v` → **10/10 test geçti** ✅
 
 ---
 
@@ -3331,20 +3366,20 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 2 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `pytest --cov=app --cov-report=term-missing tests/` çalıştır
-- [ ] Coverage raporunu incele, eksik branch'leri tespit et
-- [ ] Kritik eksik testleri yaz:
-  - [ ] Her servis fonksiyonunun hata yolu (exception path) testleri
-  - [ ] Her router endpoint için 422 validation hata testleri
-  - [ ] Access token süresi dolma senaryosu
-  - [ ] Refresh token expire senaryosu
-  - [ ] `FactCheck` confidence_score 0-1 dışında → DB constraint hatası
-  - [ ] `NewsAnalystAgent` timeout durumu
-- [ ] `coverage >= %80` hedefine ulaş
-- [ ] `pytest.ini`'ye coverage minimum eşiği ekle:
+- [x] `pytest --cov=app --cov-report=term-missing tests/` çalıştır
+- [x] Coverage raporunu incele, eksik branch'leri tespit et
+- [x] Kritik eksik testleri yaz:
+    - [x] Her servis fonksiyonunun hata yolu (exception path) testleri
+    - [x] Her router endpoint için 422 validation hata testleri
+    - [x] Access token süresi dolma senaryosu
+    - [x] Refresh token expire senaryosu
+    - [x] `FactCheck` confidence_score 0-1 dışında → DB constraint hatası
+    - [x] `NewsAnalystAgent` timeout durumu
+- [x] `coverage >= %80` hedefine ulaş
+- [x] `pytest.ini`'ye coverage minimum eşiği ekle:
   ```ini
   [pytest]
   asyncio_mode = auto
@@ -3352,16 +3387,29 @@ POST /fact-check {"claim": "..."}
   addopts = --cov=app --cov-fail-under=80
   ```
 
+> **Ekstra testler (Task 9.4 kapsamında eklendi):**
+> - `test_get_me_with_expired_access_token_returns_401`
+> - `test_refresh_with_expired_token_raises_401`
+> - `test_post_fact_check_empty_claim_returns_422`
+> - `test_check_claim_confidence_score_out_of_range_raises_db_error`
+> - `test_send_message_with_empty_content_returns_422`
+> - `test_send_message_returns_502_on_news_analyst_timeout`
+> - `test_save_article_invalid_body_returns_422`
+
+> **Doğrulama:**
+> - `python -m pytest tests/ --cov-report=term-missing` → **163/163 test geçti**, toplam coverage **%83.42** ✅
+> - Coverage eşik doğrulaması: `Required test coverage of 80% reached.` ✅
+
 ---
 
 ### Task 9.5: API Dokümantasyonu
 
 **Tahmini Süre:** 2 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `app/main.py`'deki FastAPI instance'ına metadata ekle:
+- [x] `app/main.py`'deki FastAPI instance'ına metadata ekle:
   ```python
   app = FastAPI(
       title="News AI API",
@@ -3378,8 +3426,8 @@ POST /fact-check {"claim": "..."}
       ]
   )
   ```
-- [ ] Her router ve endpoint'e `summary`, `description`, `response_model`, `status_code` parametreleri ekle
-- [ ] Her Pydantic şemasına `json_schema_extra` ile örnek veriler ekle:
+- [x] Her router ve endpoint'e `summary`, `description`, `response_model`, `status_code` parametreleri ekle
+- [x] Her Pydantic şemasına `json_schema_extra` ile örnek veriler ekle:
   ```python
   class RegisterRequest(BaseModel):
       ...
@@ -3387,7 +3435,13 @@ POST /fact-check {"claim": "..."}
           "example": {"email": "user@example.com", "password": "securepass123", "display_name": "John Doe"}
       })
   ```
-- [ ] `GET http://localhost:8001/docs` açılıyor, tüm 25+ endpoint görünüyor mu doğrula
+- [x] `GET http://localhost:8001/docs` açılıyor, tüm 25+ endpoint görünüyor mu doğrula
+
+> **Ekstra testler (roadmap'e eklendi):**
+> - `test_docs_endpoint_returns_swagger_ui`
+> - `test_openapi_metadata_matches_roadmap`
+> - `test_openapi_operations_include_summary_description_and_responses`
+> - `test_openapi_schemas_include_examples`
 
 ---
 
@@ -3395,28 +3449,28 @@ POST /fact-check {"claim": "..."}
 
 **Tahmini Süre:** 1.5 saat
 
-**Durum:** ⬜ BEKLEMEDE
+**Durum:** ✅ TAMAMLANDI
 
 **Yapılacaklar:**
-- [ ] `docker compose down -v` → `docker compose up -d --build` → sıfırdan clean build testi
-- [ ] `alembic upgrade head` sorunsuz çalışıyor mu doğrula
-- [ ] `pytest --cov=app tests/` → tüm testler geçiyor, coverage >= %80
-- [ ] `GET /health` → `{"status": "ok", "database": "connected"}`
-- [ ] Tüm `.env.example` anahtarlarının dokümante edildiğini doğrula
-- [ ] `console.log` / `print` debug çıktılarını temizle
-- [ ] `README.md`'ye backend kurulum adımları güncel mi kontrol et
-- [ ] `requirements.txt`'deki tüm bağımlılıkların stabil versiyonlarda olduğunu doğrula
+- [x] `docker compose down -v` → `docker compose up -d --build` → sıfırdan clean build testi
+- [x] `alembic upgrade head` sorunsuz çalışıyor mu doğrula
+- [x] `pytest --cov=app tests/` → tüm testler geçiyor, coverage >= %80
+- [x] `GET /health` → `{"status": "ok", "database": "connected"}`
+- [x] Tüm `.env.example` anahtarlarının dokümante edildiğini doğrula
+- [x] `console.log` / `print` debug çıktılarını temizle
+- [x] `README.md`'ye backend kurulum adımları güncel mi kontrol et
+- [x] `requirements.txt`'deki tüm bağımlılıkların stabil versiyonlarda olduğunu doğrula
 
 ---
 
 ### 📊 Phase 8 Success Metrics
 
-- [ ] E2E test senaryoları 4/4 geçiyor
-- [ ] `pytest --cov=app tests/` → coverage >= %80
-- [ ] Rate limiter: auth endpoint'lerine 11. istekte 429
-- [ ] `hashed_password` ve `token_hash` hiçbir API response'unda görünmüyor
-- [ ] `docker compose down -v && docker compose up -d --build` sorunsuz çalışıyor
-- [ ] `GET http://localhost:8001/docs` → tüm endpoint'ler görünüyor
+ - [x] E2E test senaryoları 4/4 geçiyor
+- [x] `pytest --cov=app tests/` → coverage >= %80
+- [x] Rate limiter: auth endpoint'lerine 11. istekte 429
+- [x] `hashed_password` ve `token_hash` hiçbir API response'unda görünmüyor
+- [x] `docker compose down -v && docker compose up -d --build` sorunsuz çalışıyor
+- [x] `GET http://localhost:8001/docs` → tüm endpoint'ler görünüyor
 
 ---
 
@@ -3424,13 +3478,13 @@ POST /fact-check {"claim": "..."}
 
 | Phase | İçerik | Süre | Durum |
 |-------|--------|------|-------|
-| **Phase 1** | Infrastructure & Database | 1 hafta | ⬜ Beklemede |
-| **Phase 2** | Authentication & User Management | 1.5 hafta | ⬜ Beklemede |
-| **Phase 3** | CrewAI Core (News Crew + Fact Check Crew altyapısı) | 2 hafta | ⬜ Beklemede |
-| **Phase 4** | News Feed & Cache System | 1 hafta | ⬜ Beklemede |
-| **Phase 5** | Fact Check Engine (Fact Check Crew endpoint entegrasyonu) | 1 hafta | ⬜ Beklemede |
+| **Phase 1** | Infrastructure & Database | 1 hafta | ✅ Tamamlandı |
+| **Phase 2** | Authentication & User Management | 1.5 hafta | ✅ Tamamlandı |
+| **Phase 3** | CrewAI Core (YAML konfig tabanli) | 2 hafta | ✅ Tamamlandı |
+| **Phase 4** | News Feed & Cache System | 1 hafta | ✅ Tamamlandı |
+| **Phase 5** | Fact Check Engine (YAML crew entegrasyonu dahil) | 1 hafta | ✅ Tamamlandı |
 | **Phase 6** | User Features | 1 hafta | ⬜ Beklemede |
-| **Phase 7** | Trending & Category Pages | 1 hafta | ⬜ Beklemede |
+| **Phase 7** | Trending & Category Pages | 1 hafta | 🔄 Kısmen tamamlandı |
 | **Phase 8** | Testing, Security & Polish | 1 hafta | ⬜ Beklemede |
 | **TOPLAM** | | **~9.5 hafta** | |
 

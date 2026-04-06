@@ -19,6 +19,69 @@ def _mock_async_client(response: MagicMock):
 	return client, async_client
 
 
+@pytest.fixture
+async def auth_headers(client) -> dict[str, str]:
+	await client.post(
+		"/auth/register",
+		json={
+			"email": "saved-news-user1@example.com",
+			"password": "password123",
+			"display_name": "Saved News User One",
+		},
+	)
+	login_response = await client.post(
+		"/auth/login",
+		json={
+			"email": "saved-news-user1@example.com",
+			"password": "password123",
+		},
+	)
+	token = login_response.json()["access_token"]
+	return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+async def auth_headers_user2(client) -> dict[str, str]:
+	await client.post(
+		"/auth/register",
+		json={
+			"email": "saved-news-user2@example.com",
+			"password": "password123",
+			"display_name": "Saved News User Two",
+		},
+	)
+	login_response = await client.post(
+		"/auth/login",
+		json={
+			"email": "saved-news-user2@example.com",
+			"password": "password123",
+		},
+	)
+	token = login_response.json()["access_token"]
+	return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def mock_newsapi(monkeypatch):
+	call_count = {"count": 0}
+
+	async def fake_get_or_fetch_articles(category, from_date=None):
+		call_count["count"] += 1
+		return [
+			{
+				"title": f"Trending {category}",
+				"url": f"http://trending-{category}.com",
+				"source_name": "Trending Source",
+				"published_at": None,
+				"ai_summary": None,
+				"category": category,
+			},
+		]
+
+	monkeypatch.setattr("app.routers.news.get_or_fetch_articles", fake_get_or_fetch_articles)
+	return call_count
+
+
 async def test_fetch_from_newsapi_returns_article_list():
 	response = MagicMock()
 	response.raise_for_status = MagicMock()
@@ -279,6 +342,54 @@ async def test_get_news_feed_response_has_required_fields(client, monkeypatch):
 	assert "category" in article
 
 
+async def test_get_trending_returns_article_list(client, mock_newsapi):
+	response = await client.get("/news/trending")
+
+	assert response.status_code == 200
+	assert isinstance(response.json(), list)
+
+
+async def test_get_trending_with_topic_filter(client, mock_newsapi):
+	response = await client.get("/news/trending?topic=technology")
+
+	assert response.status_code == 200
+
+
+async def test_view_count_increments_on_trending_cache_hit(db, client, mock_newsapi):
+	await client.get("/news/trending")
+	await client.get("/news/trending")
+
+	result = await db.execute(text("SELECT MAX(view_count) FROM article_cache"))
+	count = result.scalar() or 0
+	assert count >= 1
+
+
+async def test_get_category_news_returns_article_list(client, mock_newsapi):
+	response = await client.get("/news/category/technology")
+
+	assert response.status_code == 200
+	assert isinstance(response.json(), list)
+
+
+async def test_get_category_news_invalid_category_returns_422(client):
+	response = await client.get("/news/category/invalid_xyz")
+
+	assert response.status_code == 422
+
+
+async def test_get_category_news_with_subcategory_filter(client, mock_newsapi):
+	response = await client.get("/news/category/sports?subcategory=football")
+
+	assert response.status_code == 200
+
+
+async def test_get_category_news_pagination(client, mock_newsapi):
+	response = await client.get("/news/category/technology?page=1&page_size=5")
+
+	assert response.status_code == 200
+	assert len(response.json()) <= 5
+
+
 async def test_run_cleanup_deletes_expired_cache_entries(db):
 	await set_cached_articles("expired:key", [], "technology", db)
 	await db.execute(text("UPDATE article_cache SET expires_at = NOW() - INTERVAL '1 hour' WHERE cache_key = 'expired:key'"))
@@ -350,3 +461,112 @@ async def test_fetch_news_tool_accepts_valid_categories():
 
 	with pytest.raises(Exception):
 		await tool._arun(category="invalid_cat")
+
+
+async def test_save_article_returns_201(client, auth_headers):
+	response = await client.post(
+		"/news/saved",
+		json={
+			"title": "Test Article",
+			"url": "http://test.com/article",
+			"source_name": "Test Source",
+			"category": "technology",
+		},
+		headers=auth_headers,
+	)
+
+	assert response.status_code == 201
+	assert "id" in response.json()
+
+
+async def test_save_same_article_twice_returns_409(client, auth_headers):
+	article = {
+		"title": "Dup",
+		"url": "http://dup.com",
+		"source_name": "Src",
+		"category": "technology",
+	}
+
+	first_response = await client.post("/news/saved", json=article, headers=auth_headers)
+	second_response = await client.post("/news/saved", json=article, headers=auth_headers)
+
+	assert first_response.status_code == 201
+	assert second_response.status_code == 409
+
+
+async def test_get_saved_articles_returns_only_current_user(client, auth_headers, auth_headers_user2):
+	await client.post(
+		"/news/saved",
+		json={
+			"title": "A1",
+			"url": "http://a1.com",
+			"source_name": "S",
+			"category": "technology",
+		},
+		headers=auth_headers,
+	)
+	await client.post(
+		"/news/saved",
+		json={
+			"title": "A2",
+			"url": "http://a2.com",
+			"source_name": "S",
+			"category": "technology",
+		},
+		headers=auth_headers_user2,
+	)
+
+	response = await client.get("/news/saved", headers=auth_headers)
+
+	assert response.status_code == 200
+	assert len(response.json()) == 1
+	assert response.json()[0]["title"] == "A1"
+
+
+async def test_delete_saved_article_removes_from_db(client, auth_headers):
+	create_response = await client.post(
+		"/news/saved",
+		json={
+			"title": "Del",
+			"url": "http://del.com",
+			"source_name": "S",
+			"category": "technology",
+		},
+		headers=auth_headers,
+	)
+	article_id = create_response.json()["id"]
+
+	delete_response = await client.delete(f"/news/saved/{article_id}", headers=auth_headers)
+	list_response = await client.get("/news/saved", headers=auth_headers)
+
+	assert delete_response.status_code == 204
+	assert list_response.status_code == 200
+	assert len(list_response.json()) == 0
+
+
+async def test_save_article_requires_auth(client):
+	response = await client.post(
+		"/news/saved",
+		json={
+			"title": "T",
+			"url": "http://t.com",
+			"source_name": "S",
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 401
+
+
+async def test_save_article_invalid_body_returns_422(client, auth_headers):
+	response = await client.post(
+		"/news/saved",
+		json={
+			"title": "T",
+			"source_name": "S",
+			"category": "technology",
+		},
+		headers=auth_headers,
+	)
+
+	assert response.status_code == 422

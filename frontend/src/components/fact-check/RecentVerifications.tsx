@@ -1,10 +1,13 @@
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Badge } from '@/components/ui/Badge'
+import { ErrorState } from '@/components/ErrorState'
 import type { FactCheck, Verdict } from '@/types/factCheck'
 
 interface RecentVerificationsProps {
   verifications: FactCheck[]
   isLoading: boolean
+  isError?: boolean
+  onRetry?: () => void
 }
 
 const verdictVariants: Record<Verdict, 'success' | 'danger' | 'warning'> = {
@@ -32,7 +35,12 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString()
 }
 
-export function RecentVerifications({ verifications, isLoading }: RecentVerificationsProps) {
+export function RecentVerifications({
+  verifications,
+  isLoading,
+  isError = false,
+  onRetry,
+}: RecentVerificationsProps) {
   if (isLoading) {
     return (
       <div data-testid="verification-skeleton" className="rounded-lg border border-navy-700 bg-navy-800 p-4">
@@ -46,13 +54,22 @@ export function RecentVerifications({ verifications, isLoading }: RecentVerifica
     )
   }
 
+  if (isError) {
+    return (
+      <ErrorState
+        message="Yüklenemedi. Tekrar dene"
+        onRetry={onRetry ?? (() => undefined)}
+      />
+    )
+  }
+
   return (
     <div className="rounded-lg border border-navy-700 bg-navy-800 p-4">
       <h3 className="mb-4 font-semibold text-text-primary">Recent Verifications</h3>
 
       {verifications.length === 0 ? (
         <div className="flex items-center justify-center rounded-lg border border-dashed border-navy-600 py-8">
-          <p className="text-sm text-text-muted">No verifications yet. Start by checking a claim above!</p>
+          <p className="text-sm text-text-muted">Henüz doğrulama yapmadınız.</p>
         </div>
       ) : (
         <div className="max-h-96 space-y-2 overflow-y-auto">

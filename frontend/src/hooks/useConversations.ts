@@ -7,6 +7,7 @@ import type { Conversation } from '@/types/conversation'
 
 type ConversationCreateInput = {
 	title?: string
+	initialMessage?: string
 }
 
 export function useConversations() {
@@ -24,9 +25,12 @@ export function useCreateConversation() {
 			const response = await api.post<Conversation>('/conversations', data)
 			return response.data
 		},
-		onSuccess: (conversation) => {
+		onSuccess: (conversation, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['conversations'] })
-			router.push(`/chat/${conversation.id}`)
+			const initialMessage = variables?.initialMessage?.trim()
+			router.push(
+				initialMessage ? `/chat/${conversation.id}?message=${encodeURIComponent(initialMessage)}` : `/chat/${conversation.id}`,
+			)
 		},
 	})
 }

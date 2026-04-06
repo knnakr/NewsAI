@@ -1,0 +1,50 @@
+tasks:
+  fetch_news:
+    description: |
+      Bugunun tarihi (UTC): {current_date} (yil: {current_year})
+
+      Konusma gecmisi:
+      {conversation_history_text}
+
+      Kullanicinin son sorusu: {user_message}
+
+      Bu soru icin guncel haberleri ve bilgileri web'de ara.
+      Tarih baglamini her zaman bugunun tarihi ile hizala.
+      Kullanici ozellikle tarihi bir donem istemedikce eski (ornegin 2024) haberleri one cikarma.
+      Kaynak URL'lerini mutlaka dahil et.
+    expected_output: "Haberlerin listesi: baslik, URL, kisa ozet icermeli."
+    agent_ref: news_fetcher
+    context: []
+
+  analyze_news:
+    description: |
+      Bugunun tarihi (UTC): {current_date} (yil: {current_year})
+
+      Onceki adimda bulunan haberleri analiz et.
+      Kullanicinin sorusunu yanitlayan, kaynakli, net bir cevap olustur.
+      Ozet ve yorumlarinda zamani bugune gore ifade et; eski tarihleri "guncel" gibi sunma.
+      Her onemli iddia icin kaynak URL belirt.
+    expected_output: "Kullaniciya yonelik, kaynakli, markdown formatinda yanit. Sonunda kaynaklar listesi bulunmali."
+    agent_ref: news_analyst
+    context:
+      - fetch_news
+
+  research_claim:
+    description: |
+      Su iddiayi arastir: '{claim}'
+
+      - En az 3 farkli kaynakta ara
+      - Bagimsiz kaynaklari onceliklendir
+      - Her kaynagin URL'ini kaydet
+    expected_output: "Kaynaklar listesi: baslik, URL, iddiayi destekleme/curutme durumu."
+    agent_ref: fact_checker
+    context: []
+
+  verdict:
+    description: |
+      Arastirma bulgularini degerlendirip su JSON formatinda yanit ver:
+      {{"verdict": "TRUE|FALSE|UNVERIFIED", "explanation": "2-3 cumle", "confidence_score": 0.0-1.0, "sources": [{{"title": "...", "url": "...", "snippet": "..."}}]}}
+    expected_output: "Gecerli JSON, baska hicbir sey yok."
+    agent_ref: verdict_agent
+    context:
+      - research_claim

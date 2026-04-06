@@ -124,6 +124,12 @@ export default function ConversationList({
       </Link>
 
       <div className="flex-1 overflow-y-auto space-y-2">
+        {conversations.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-navy-600 px-4 py-6 text-center">
+            <p className="text-sm text-text-muted">Henüz sohbet yok. Yeni bir sohbet başlat.</p>
+          </div>
+        ) : null}
+
         {conversations.map((conv) => (
           <div
             key={conv.id}

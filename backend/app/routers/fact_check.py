@@ -44,7 +44,13 @@ async def get_optional_user(
 	return user
 
 
-@router.post("", response_model=FactCheckResponse)
+@router.post(
+	"",
+	response_model=FactCheckResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Create fact check",
+	description="İddiayı Fact Check Crew ile doğrular ve sonucu kaydeder.",
+)
 async def post_fact_check(
 	payload: FactCheckRequest,
 	current_user: User | None = Depends(get_optional_user),
@@ -67,7 +73,13 @@ async def post_fact_check(
 	return FactCheckResponse.model_validate(fact_check)
 
 
-@router.get("/history", response_model=list[FactCheckResponse])
+@router.get(
+	"/history",
+	response_model=list[FactCheckResponse],
+	status_code=status.HTTP_200_OK,
+	summary="List fact-check history",
+	description="Giriş yapmış kullanıcının fact-check geçmişini listeler.",
+)
 async def get_fact_check_history(
 	current_user: User = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db),
@@ -81,7 +93,13 @@ async def get_fact_check_history(
 	return [FactCheckResponse.model_validate(item) for item in items]
 
 
-@router.get("/{fact_check_id}", response_model=FactCheckResponse)
+@router.get(
+	"/{fact_check_id}",
+	response_model=FactCheckResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Get fact check",
+	description="Kullanıcıya ait tek bir fact-check kaydını döndürür.",
+)
 async def get_fact_check(
 	fact_check_id: uuid.UUID,
 	current_user: User = Depends(get_current_user),

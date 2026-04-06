@@ -5,9 +5,11 @@ import { AuthGuard } from "@/components/layout/AuthGuard";
 import { useAuthStore } from "@/stores/authStore";
 
 const mockReplace = jest.fn();
+const mockUsePathname = jest.fn(() => "/chat");
 
 jest.mock("next/navigation", () => ({
 	useRouter: () => ({ replace: mockReplace }),
+	usePathname: () => mockUsePathname(),
 }));
 
 jest.mock("@/stores/authStore", () => ({
@@ -19,6 +21,7 @@ const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
 describe("AuthGuard", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockUsePathname.mockReturnValue("/chat");
 	});
 
 	test("redirects to login when not authenticated", async () => {

@@ -4,6 +4,12 @@ import userEvent from '@testing-library/user-event'
 import ConversationList from '@/components/chat/ConversationList'
 
 describe('ConversationList', () => {
+  test('shows empty state message when conversations are empty', () => {
+    render(<ConversationList conversations={[]} activeId={null} onDelete={jest.fn()} />)
+
+    expect(screen.getByText(/Henüz sohbet yok\. Yeni bir sohbet başlat\./i)).toBeInTheDocument()
+  })
+
   test('renders conversation titles', () => {
     const conversations = [
       { id: '1', title: 'Conv 1', updated_at: '2024-01-01' },

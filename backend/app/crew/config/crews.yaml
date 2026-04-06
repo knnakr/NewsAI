@@ -1,0 +1,20 @@
+crews:
+  news:
+    agents:
+      - news_fetcher
+      - news_analyst
+    tasks:
+      - fetch_news
+      - analyze_news
+    process: sequential
+    verbose: true
+
+  fact_check:
+    agents:
+      - fact_checker
+      - verdict_agent
+    tasks:
+      - research_claim
+      - verdict
+    process: sequential
+    verbose: true

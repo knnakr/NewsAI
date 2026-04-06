@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import ChatPage from '@/app/(dashboard)/chat/page'
 import ChatDetailPage from '@/app/(dashboard)/chat/[id]/page'
@@ -10,6 +10,7 @@ const mockUseParams = jest.fn()
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
   useParams: () => mockUseParams(),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 jest.mock('@/hooks/useConversations', () => ({
@@ -55,11 +56,17 @@ beforeEach(() => {
   mockUseParams.mockReturnValue({ id: 'conversation-1' })
 })
 
-test('chat page triggers conversation creation on mount', () => {
+test('chat page creates a conversation on send', () => {
   render(<ChatPage />)
 
-  expect(mockMutate).toHaveBeenCalledWith({})
-  expect(screen.getByText(/Starting a new conversation/i)).toBeInTheDocument()
+  expect(screen.getByText(/Welcome to News AI/i)).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /messageinput/i }))
+
+  expect(mockMutate).toHaveBeenCalledWith({
+    title: 'hello',
+    initialMessage: 'hello',
+  })
 })
 
 test('chat detail page renders messages and message input', () => {

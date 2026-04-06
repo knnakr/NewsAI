@@ -30,6 +30,18 @@ describe("Sidebar", () => {
 		expect(screen.getByText(/Trending/i)).toBeInTheDocument();
 	});
 
+	test("renders settings link in footer", () => {
+		render(<Sidebar />);
+		const settingsLink = screen.getByRole("link", { name: /settings/i });
+		expect(settingsLink).toHaveAttribute("href", "/settings");
+	});
+
+	test("renders saved link in footer", () => {
+		render(<Sidebar />);
+		const savedLink = screen.getByRole("link", { name: /saved/i });
+		expect(savedLink).toHaveAttribute("href", "/saved");
+	});
+
 	test("renders category links", () => {
 		render(<Sidebar />);
 		expect(screen.getByText(/World/i)).toBeInTheDocument();

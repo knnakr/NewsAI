@@ -53,7 +53,13 @@ async def _get_user_conversation_or_raise(
 	return conversation
 
 
-@router.get("", response_model=list[ConversationResponse])
+@router.get(
+	"",
+	response_model=list[ConversationResponse],
+	status_code=status.HTTP_200_OK,
+	summary="List conversations",
+	description="Giriş yapmış kullanıcının aktif konuşmalarını listeler.",
+)
 async def list_conversations(
 	current_user: User = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db),
@@ -66,7 +72,13 @@ async def list_conversations(
 	return list(result.scalars().all())
 
 
-@router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+	"",
+	response_model=ConversationResponse,
+	status_code=status.HTTP_201_CREATED,
+	summary="Create conversation",
+	description="Yeni bir konuşma oluşturur.",
+)
 async def create_conversation(
 	payload: ConversationCreate | None = None,
 	current_user: User = Depends(get_current_user),
@@ -79,7 +91,13 @@ async def create_conversation(
 	return conversation
 
 
-@router.get("/{conversation_id}", response_model=ConversationDetailResponse)
+@router.get(
+	"/{conversation_id}",
+	response_model=ConversationDetailResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Get conversation",
+	description="Bir konuşmayı ve tüm mesajlarını döndürür.",
+)
 async def get_conversation(
 	conversation_id: uuid.UUID,
 	current_user: User = Depends(get_current_user),
@@ -101,7 +119,13 @@ async def get_conversation(
 	)
 
 
-@router.patch("/{conversation_id}", response_model=ConversationResponse)
+@router.patch(
+	"/{conversation_id}",
+	response_model=ConversationResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Update conversation",
+	description="Konuşma başlığını günceller.",
+)
 async def update_conversation(
 	conversation_id: uuid.UUID,
 	payload: ConversationUpdate,
@@ -115,7 +139,12 @@ async def update_conversation(
 	return conversation
 
 
-@router.delete("/{conversation_id}")
+@router.delete(
+	"/{conversation_id}",
+	status_code=status.HTTP_200_OK,
+	summary="Delete conversation",
+	description="Konuşmayı soft delete ile siler.",
+)
 async def delete_conversation(
 	conversation_id: uuid.UUID,
 	current_user: User = Depends(get_current_user),
@@ -127,7 +156,13 @@ async def delete_conversation(
 	return {"detail": "Konuşma silindi"}
 
 
-@router.post("/{conversation_id}/archive", response_model=ConversationResponse)
+@router.post(
+	"/{conversation_id}/archive",
+	response_model=ConversationResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Archive conversation",
+	description="Konuşmayı arşivlenmiş olarak işaretler.",
+)
 async def archive_conversation(
 	conversation_id: uuid.UUID,
 	current_user: User = Depends(get_current_user),
@@ -140,7 +175,13 @@ async def archive_conversation(
 	return conversation
 
 
-@router.post("/{conversation_id}/messages", response_model=MessageResponse)
+@router.post(
+	"/{conversation_id}/messages",
+	response_model=MessageResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Send message",
+	description="Kullanıcı mesajını kaydeder, News Crew'u çalıştırır ve asistandan yanıt döndürür.",
+)
 async def send_message(
 	conversation_id: uuid.UUID,
 	message_body: MessageCreate,
@@ -209,7 +250,12 @@ async def send_message(
 	return assistant_message
 
 
-@router.post("/{conversation_id}/messages/stream")
+@router.post(
+	"/{conversation_id}/messages/stream",
+	status_code=status.HTTP_200_OK,
+	summary="Send streaming message",
+	description="Kullanıcı mesajını kaydeder ve CrewAI ara çıktıları ile SSE stream döndürür.",
+)
 async def send_message_stream(
 	conversation_id: uuid.UUID,
 	message_body: MessageCreate,

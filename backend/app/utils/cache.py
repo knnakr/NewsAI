@@ -13,7 +13,11 @@ def build_cache_key(category: str, period: str | None = None) -> str:
 	return f"{category}:{period or 'default'}"
 
 
-async def get_cached_articles(cache_key: str, db: AsyncSession) -> list[dict] | None:
+async def get_cached_articles(
+	cache_key: str,
+	db: AsyncSession,
+	increment_view_count: bool = False,
+) -> list[dict] | None:
 	"""Return cached articles when the entry is still valid."""
 	result = await db.execute(
 		select(ArticleCache).where(
@@ -26,6 +30,8 @@ async def get_cached_articles(cache_key: str, db: AsyncSession) -> list[dict] | 
 		return None
 
 	entry.request_count += 1
+	if increment_view_count:
+		entry.view_count += 1
 	await db.commit()
 	return entry.articles_json
 

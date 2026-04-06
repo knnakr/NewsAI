@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface ClaimInputProps {
@@ -32,6 +31,7 @@ export function ClaimInput({ onSubmit, isLoading }: ClaimInputProps) {
 
       <div className="mb-4 flex flex-col gap-3">
         <textarea
+          data-testid="claim-input"
           value={claim}
           onChange={(e) => setClaim(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -42,6 +42,7 @@ export function ClaimInput({ onSubmit, isLoading }: ClaimInputProps) {
       </div>
 
       <Button
+        data-testid="verify-button"
         onClick={handleSubmit}
         disabled={isLoading || !claim.trim()}
         loading={isLoading}

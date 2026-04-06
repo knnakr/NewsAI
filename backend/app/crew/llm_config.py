@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from crewai import LLM
+
+from app.config import settings
+
 GROQ_OPENAI_BASE_URL = "https://api.groq.com/openai/v1"
 _COMPOUND_MODELS = {"groq/compound", "groq/compound-mini"}
 
@@ -23,3 +27,10 @@ def crewai_model_kwargs(model_name: str) -> dict[str, Any]:
 			"base_url": GROQ_OPENAI_BASE_URL,
 		}
 	return {"model": normalized}
+
+
+def create_crewai_llm(model_name: str, temperature: float | None = None) -> LLM:
+	kwargs = crewai_model_kwargs(model_name)
+	if temperature is not None:
+		kwargs["temperature"] = temperature
+	return LLM(api_key=settings.GROQ_API_KEY, **kwargs)

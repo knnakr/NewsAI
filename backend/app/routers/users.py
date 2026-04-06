@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -15,12 +15,24 @@ from app.schemas.user import (
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get(
+	"/me",
+	response_model=UserResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Get current user",
+	description="Giriş yapmış kullanıcının profil bilgilerini döndürür.",
+)
 async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse:
 	return UserResponse.model_validate(current_user)
 
 
-@router.patch("/me", response_model=UserResponse)
+@router.patch(
+	"/me",
+	response_model=UserResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Update current user",
+	description="Giriş yapmış kullanıcının display name alanını günceller.",
+)
 async def patch_me(
 	payload: UpdateUserRequest,
 	current_user: User = Depends(get_current_user),
@@ -33,7 +45,12 @@ async def patch_me(
 	return UserResponse.model_validate(current_user)
 
 
-@router.delete("/me")
+@router.delete(
+	"/me",
+	status_code=status.HTTP_200_OK,
+	summary="Delete current user",
+	description="Giriş yapmış kullanıcının hesabını siler.",
+)
 async def delete_me(
 	current_user: User = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db),
@@ -43,7 +60,13 @@ async def delete_me(
 	return {"detail": "Hesap silindi"}
 
 
-@router.get("/me/preferences", response_model=UserPreferencesResponse)
+@router.get(
+	"/me/preferences",
+	response_model=UserPreferencesResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Get user preferences",
+	description="Giriş yapmış kullanıcının tercihlerini döndürür.",
+)
 async def get_preferences(
 	current_user: User = Depends(get_current_user),
 	db: AsyncSession = Depends(get_db),
@@ -57,7 +80,13 @@ async def get_preferences(
 	return UserPreferencesResponse.model_validate(preferences)
 
 
-@router.patch("/me/preferences", response_model=UserPreferencesResponse)
+@router.patch(
+	"/me/preferences",
+	response_model=UserPreferencesResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Update user preferences",
+	description="Kullanıcının dil, ton ve haber tercihlerini günceller.",
+)
 async def patch_preferences(
 	payload: UpdatePreferencesRequest,
 	current_user: User = Depends(get_current_user),

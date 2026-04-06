@@ -1,11 +1,12 @@
 import asyncio
+import json
 import re
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.crew.fact_check_crew import run_fact_check_crew
+from app.crew.crew_factory import CrewFactory
 from app.models.fact_check import FactCheck
 
 
@@ -29,14 +30,18 @@ async def _run_fact_check_with_retry(claim: str) -> dict:
 	max_attempts = 5
 	for attempt in range(max_attempts):
 		try:
-			return await run_fact_check_crew(claim)
+			crew = CrewFactory.create_fact_check_crew(claim=claim)
+			result = await crew.kickoff_async()
+			return _normalize_fact_check_output(result.raw)
 		except Exception as exc:
 			if _needs_compound_fallback(exc):
-				return await run_fact_check_crew(
-					claim,
+				crew = CrewFactory.create_fact_check_crew(
+					claim=claim,
 					default_model=settings.GROQ_MODEL_DEFAULT,
 					reasoning_model=settings.GROQ_MODEL_REASONING,
 				)
+				result = await crew.kickoff_async()
+				return _normalize_fact_check_output(result.raw)
 			if not _is_rate_limit_error(exc) or attempt == max_attempts - 1:
 				raise
 			await asyncio.sleep(_extract_retry_after_seconds(exc))
@@ -69,3 +74,11 @@ def _extract_retry_after_seconds(exc: Exception) -> float:
 		return min(float(match.group(1)) + 0.5, 8.0)
 	except ValueError:
 		return 3.0
+
+
+def _normalize_fact_check_output(raw: object) -> dict:
+	if isinstance(raw, dict):
+		return raw
+	if isinstance(raw, str):
+		return json.loads(raw)
+	raise ValueError("Fact-check crew returned unsupported output format")

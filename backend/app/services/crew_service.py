@@ -7,7 +7,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crew.news_crew import run_news_crew
+from app.crew.crew_factory import CrewFactory
 from app.crew.utils import clear_tool_call_context, set_tool_call_context
 
 
@@ -68,13 +68,15 @@ async def _run_news_crew_with_retry(
 	max_attempts = 3
 	for attempt in range(max_attempts):
 		try:
-			return await run_news_crew(
-				user_message,
-				conversation_history,
-				language,
-				ai_tone,
+			crew = CrewFactory.create_news_crew(
+				user_message=user_message,
+				conversation_history=conversation_history,
+				language=language,
+				ai_tone=ai_tone,
 				step_callback=step_callback,
 			)
+			result = await crew.kickoff_async()
+			return result.raw
 		except Exception as exc:
 			if not _is_rate_limit_error(exc) or attempt == max_attempts - 1:
 				raise

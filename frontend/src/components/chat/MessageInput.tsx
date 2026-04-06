@@ -7,14 +7,22 @@ import { Card } from '@/components/ui/Card'
 type MessageInputProps = {
   onSend: (content: string) => void
   disabled: boolean
+  draftMessage?: string
 }
 
 const MAX_LENGTH = 4000
 const MAX_HEIGHT = 144
 
-export function MessageInput({ onSend, disabled }: MessageInputProps) {
+export function MessageInput({ onSend, disabled, draftMessage }: MessageInputProps) {
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    if (typeof draftMessage === 'string') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- draft updates are an external prop sync.
+      setContent(draftMessage)
+    }
+  }, [draftMessage])
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -42,6 +50,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
       <div className="space-y-3">
         <textarea
           ref={textareaRef}
+          data-testid="message-input"
           role="textbox"
           value={content}
           disabled={disabled}

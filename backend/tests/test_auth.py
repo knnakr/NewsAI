@@ -3,9 +3,11 @@ Tests for authentication and security utilities.
 """
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import HTTPException, Response
+from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy import select, text
 from app.models.user import PasswordResetToken, User
@@ -26,6 +28,7 @@ from app.utils.security import (
 )
 from app.schemas.user import RegisterRequest, LoginRequest
 from app.services.auth_service import register_user, login_user, refresh_tokens, logout_user
+from app.config import Settings, settings
 
 
 # ============================================================================
@@ -78,6 +81,18 @@ def test_hash_token_is_deterministic():
 def test_hash_token_different_inputs():
     """Verify different inputs produce different hashes."""
     assert hash_token("abc") != hash_token("xyz")
+
+
+def test_settings_rejects_short_jwt_secret():
+    """Verify JWT_SECRET must be at least 32 characters."""
+    with pytest.raises(ValidationError):
+        Settings(
+            DATABASE_URL="postgresql+asyncpg://newsai:newsai@localhost:5433/newsai",
+            GROQ_API_KEY="g",
+            TAVILY_API_KEY="t",
+            NEWS_API_KEY="n",
+            JWT_SECRET="short-secret",
+        )
 
 
 # ============================================================================
@@ -203,6 +218,27 @@ async def test_refresh_with_revoked_token_raises_401(db):
     await register_user("revoke@example.com", "password123", "Revoke User", db)
     _, refresh = await login_user("revoke@example.com", "password123", db)
     await logout_user(refresh, db)
+    with pytest.raises(HTTPException) as exc:
+        await refresh_tokens(refresh, db)
+    assert exc.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_with_expired_token_raises_401(db):
+    """Verify expired refresh token cannot be used again."""
+    await register_user("expired-refresh@example.com", "password123", "Expired Refresh", db)
+    _, refresh = await login_user("expired-refresh@example.com", "password123", db)
+
+    await db.execute(
+        text(
+            "UPDATE refresh_tokens "
+            "SET expires_at = NOW() - INTERVAL '1 minute' "
+            "WHERE token_hash = :token_hash"
+        ),
+        {"token_hash": hash_token(refresh)},
+    )
+    await db.commit()
+
     with pytest.raises(HTTPException) as exc:
         await refresh_tokens(refresh, db)
     assert exc.value.status_code == 401
@@ -543,6 +579,13 @@ async def auth_headers(client) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+@pytest.fixture
+def mock_crew_service(monkeypatch):
+    mock_run_chat_crew = AsyncMock(return_value=("Mock assistant response", []))
+    monkeypatch.setattr("app.routers.conversations.run_chat_crew", mock_run_chat_crew)
+    return mock_run_chat_crew
+
+
 @pytest.mark.asyncio
 async def test_get_me_returns_current_user(client, auth_headers):
     response = await client.get("/users/me", headers=auth_headers)
@@ -559,6 +602,25 @@ async def test_get_me_without_token_returns_401(client):
 @pytest.mark.asyncio
 async def test_get_me_with_invalid_token_returns_401(client):
     response = await client.get("/users/me", headers={"Authorization": "Bearer invalid.token.here"})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_me_with_expired_access_token_returns_401(client, db):
+    await register_user("expired-access@example.com", "password123", "Expired Access", db)
+    result = await db.execute(select(User).where(User.email == "expired-access@example.com"))
+    user = result.scalar_one()
+
+    expired_token = jwt.encode(
+        {
+            "sub": str(user.id),
+            "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+        },
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+    response = await client.get("/users/me", headers={"Authorization": f"Bearer {expired_token}"})
     assert response.status_code == 401
 
 
@@ -595,6 +657,54 @@ async def test_patch_preferences_updates_language(client, auth_headers):
 async def test_patch_preferences_invalid_ai_tone_returns_422(client, auth_headers):
     response = await client.patch("/users/me/preferences", json={"ai_tone": "aggressive"}, headers=auth_headers)
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_news_analyst_goal_changes_with_language_preference(client, auth_headers, mock_crew_service):
+    pref_response = await client.patch(
+        "/users/me/preferences",
+        json={"language": "English"},
+        headers=auth_headers,
+    )
+    assert pref_response.status_code == 200
+
+    create_conv_response = await client.post("/conversations", headers=auth_headers)
+    assert create_conv_response.status_code == 201
+    conversation_id = create_conv_response.json()["id"]
+
+    message_response = await client.post(
+        f"/conversations/{conversation_id}/messages",
+        json={"content": "Latest technology updates?"},
+        headers=auth_headers,
+    )
+    assert message_response.status_code == 200
+
+    call_args = mock_crew_service.call_args
+    assert call_args.kwargs["user_preferences"]["language"] == "English"
+
+
+@pytest.mark.asyncio
+async def test_news_analyst_goal_changes_with_tone_preference(client, auth_headers, mock_crew_service):
+    pref_response = await client.patch(
+        "/users/me/preferences",
+        json={"ai_tone": "formal"},
+        headers=auth_headers,
+    )
+    assert pref_response.status_code == 200
+
+    create_conv_response = await client.post("/conversations", headers=auth_headers)
+    assert create_conv_response.status_code == 201
+    conversation_id = create_conv_response.json()["id"]
+
+    message_response = await client.post(
+        f"/conversations/{conversation_id}/messages",
+        json={"content": "Give me a brief world news summary."},
+        headers=auth_headers,
+    )
+    assert message_response.status_code == 200
+
+    call_args = mock_crew_service.call_args
+    assert call_args.kwargs["user_preferences"]["ai_tone"] == "formal"
 
 
 # ============================================================================

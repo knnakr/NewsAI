@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 import secrets
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,19 +20,44 @@ router = APIRouter()
 class ForgotPasswordRequest(BaseModel):
 	email: EmailStr
 
+	model_config = ConfigDict(
+		json_schema_extra={"example": {"email": "user@example.com"}}
+	)
+
 
 class ResetPasswordRequest(BaseModel):
 	token: str
 	password: str
 
+	model_config = ConfigDict(
+		json_schema_extra={
+			"example": {
+				"token": "reset-token-value",
+				"password": "newsecurepass123",
+			}
+		}
+	)
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+	"/register",
+	response_model=UserResponse,
+	status_code=status.HTTP_201_CREATED,
+	summary="Register user",
+	description="Yeni kullanıcı oluşturur ve profil kaydını döndürür.",
+)
 async def post_register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)) -> UserResponse:
 	user = await register_user(payload.email, payload.password, payload.display_name, db)
 	return UserResponse.model_validate(user)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+	"/login",
+	response_model=TokenResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Login user",
+	description="Kimlik doğrular, access token ve refresh cookie döndürür.",
+)
 async def post_login(
 	payload: LoginRequest,
 	response: Response,
@@ -52,7 +77,13 @@ async def post_login(
 	)
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post(
+	"/refresh",
+	response_model=TokenResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Refresh access token",
+	description="Refresh cookie'deki token ile yeni access token üretir.",
+)
 async def post_refresh(
 	response: Response,
 	refresh_token: str | None = Cookie(default=None),
@@ -75,7 +106,12 @@ async def post_refresh(
 	)
 
 
-@router.post("/logout")
+@router.post(
+	"/logout",
+	status_code=status.HTTP_200_OK,
+	summary="Logout user",
+	description="Refresh cookie'yi revoke eder ve istemciden siler.",
+)
 async def post_logout(
 	response: Response,
 	refresh_token: str | None = Cookie(default=None),
@@ -87,7 +123,12 @@ async def post_logout(
 	return {"detail": "Cikis yapildi"}
 
 
-@router.post("/forgot-password")
+@router.post(
+	"/forgot-password",
+	status_code=status.HTTP_200_OK,
+	summary="Request password reset",
+	description="Var olan kullanıcı için şifre sıfırlama akışını başlatır.",
+)
 async def post_forgot_password(
 	payload: ForgotPasswordRequest,
 	db: AsyncSession = Depends(get_db),
@@ -108,7 +149,12 @@ async def post_forgot_password(
 	return {"detail": "E-posta varsa sifre sifirlama adimlari gonderilecektir"}
 
 
-@router.post("/reset-password")
+@router.post(
+	"/reset-password",
+	status_code=status.HTTP_200_OK,
+	summary="Reset password",
+	description="Doğrulanan reset token ile kullanıcı şifresini günceller.",
+)
 async def post_reset_password(
 	payload: ResetPasswordRequest,
 	db: AsyncSession = Depends(get_db),

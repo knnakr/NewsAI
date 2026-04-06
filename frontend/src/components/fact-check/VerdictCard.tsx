@@ -39,10 +39,13 @@ export function VerdictCard({
   const confidencePercent = Math.round((confidence_score || 0) * 100)
 
   return (
-    <div className="rounded-lg border border-navy-700 bg-navy-800 p-6">
+    <div data-testid="verdict-card" className="rounded-lg border border-navy-700 bg-navy-800 p-6">
       {/* Verdict Badge */}
       <div className="mb-4 flex items-center gap-3">
-        <span className={`rounded-full px-4 py-2 text-sm font-bold ${verdictColors[verdict]} verdict-${verdict.toLowerCase()}`}>
+        <span
+          data-testid="verdict-badge"
+          className={`rounded-full px-4 py-2 text-sm font-bold ${verdictColors[verdict]} verdict-${verdict.toLowerCase()}`}
+        >
           {verdict}
         </span>
         <span className="text-lg font-semibold text-text-primary">{confidencePercent}% Confidence</span>
