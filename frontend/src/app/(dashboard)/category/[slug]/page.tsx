@@ -9,7 +9,7 @@ import { NewsCard } from '@/components/news/NewsCard'
 import { NewsCardSkeleton } from '@/components/news/NewsCardSkeleton'
 import { SubCategoryChips } from '@/components/news/SubCategoryChips'
 import { Button } from '@/components/ui/Button'
-import { useCategoryNews } from '@/hooks/useNews'
+import { useCategoryNews, useSummarizeArticle } from '@/hooks/useNews'
 import type { Article } from '@/types/news'
 
 const VALID_CATEGORIES = new Set([
@@ -37,6 +37,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(subcategoryFromUrl)
   const [page, setPage] = useState(() => Number(searchParams.get('page') ?? '1'))
   const [articles, setArticles] = useState<Article[]>([])
+  const [summarizingUrl, setSummarizingUrl] = useState<string | null>(null)
+  const [summaryErrors, setSummaryErrors] = useState<Record<string, string>>({})
+  const summarizeArticle = useSummarizeArticle()
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- this state mirrors URL query selection.
@@ -74,6 +77,32 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     if (slug !== 'sports') return []
     return articles.slice(1)
   }, [articles, slug])
+
+  const handleSummarizeArticle = async (article: Article) => {
+    setSummarizingUrl(article.url)
+    setSummaryErrors((prev) => {
+      const next = { ...prev }
+      delete next[article.url]
+      return next
+    })
+
+    try {
+      await summarizeArticle.mutateAsync({
+        title: article.title,
+        url: article.url,
+        source_name: article.source_name,
+        published_at: article.published_at,
+        category: article.category,
+      })
+    } catch {
+      setSummaryErrors((prev) => ({
+        ...prev,
+        [article.url]: 'Summary olusturulamadi. Tekrar deneyin.',
+      }))
+    } finally {
+      setSummarizingUrl(null)
+    }
+  }
 
   if (!VALID_CATEGORIES.has(slug)) {
     return (
@@ -119,14 +148,25 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       {!isLoading && !isError && slug === 'sports' && featuredArticle ? (
         <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-blue">Featured</p>
-          <NewsCard article={featuredArticle} />
+          <NewsCard
+            article={featuredArticle}
+            onSummarize={handleSummarizeArticle}
+            isSummarizing={summarizingUrl === featuredArticle.url && summarizeArticle.isPending}
+            summaryError={summaryErrors[featuredArticle.url] ?? null}
+          />
         </div>
       ) : null}
 
       {!isLoading && !isError && slug === 'sports' ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {sportsGridArticles.map((article) => (
-            <NewsCard key={`${article.url}-${article.published_at}`} article={article} />
+            <NewsCard
+              key={`${article.url}-${article.published_at}`}
+              article={article}
+              onSummarize={handleSummarizeArticle}
+              isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
+              summaryError={summaryErrors[article.url] ?? null}
+            />
           ))}
         </div>
       ) : null}
@@ -134,7 +174,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       {!isLoading && !isError && slug === 'technology' ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {articles.map((article) => (
-            <NewsCard key={`${article.url}-${article.published_at}`} article={article} />
+            <NewsCard
+              key={`${article.url}-${article.published_at}`}
+              article={article}
+              onSummarize={handleSummarizeArticle}
+              isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
+              summaryError={summaryErrors[article.url] ?? null}
+            />
           ))}
         </div>
       ) : null}
@@ -142,7 +188,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       {!isLoading && !isError && slug !== 'sports' && slug !== 'technology' ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {articles.map((article) => (
-            <NewsCard key={`${article.url}-${article.published_at}`} article={article} />
+            <NewsCard
+              key={`${article.url}-${article.published_at}`}
+              article={article}
+              onSummarize={handleSummarizeArticle}
+              isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
+              summaryError={summaryErrors[article.url] ?? null}
+            />
           ))}
         </div>
       ) : null}

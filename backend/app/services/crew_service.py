@@ -86,9 +86,55 @@ async def _run_news_crew_with_retry(
 	raise RuntimeError("News crew unexpectedly failed without an exception")
 
 
+async def run_article_summary_crew(
+	*,
+	article_url: str,
+	article_title: str,
+	article_source: str,
+	article_category: str,
+	language: str = "Turkish",
+	ai_tone: str = "neutral",
+) -> str:
+	max_attempts = 3
+	for attempt in range(max_attempts):
+		try:
+			crew = CrewFactory.create_news_summary_crew(
+				article_url=article_url,
+				article_title=article_title,
+				article_source=article_source,
+				article_category=article_category,
+				language=language,
+				ai_tone=ai_tone,
+			)
+			result = await crew.kickoff_async()
+			return _normalize_summary_text(result.raw)
+		except Exception as exc:
+			if attempt == max_attempts - 1:
+				raise
+
+			if _is_rate_limit_error(exc):
+				await asyncio.sleep(_extract_retry_after_seconds(exc))
+				continue
+
+			if _is_retryable_summary_error(exc):
+				# Some providers intermittently reject tool-call transcripts.
+				# A short retry often succeeds with the next request.
+				await asyncio.sleep(1.0 + attempt * 0.5)
+				continue
+
+			raise
+
+	raise RuntimeError("Summary crew unexpectedly failed without an exception")
+
+
 def _is_rate_limit_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return "rate_limit_exceeded" in message or "ratelimiterror" in message
+
+
+def _is_retryable_summary_error(exc: Exception) -> bool:
+	message = str(exc).lower()
+	return "last message role must be 'user'" in message
 
 
 def _extract_retry_after_seconds(exc: Exception) -> float:
@@ -126,3 +172,15 @@ def _parse_sources_from_result(result: str) -> list[dict]:
 	"""Extract URLs from markdown/plain text crew output as source list."""
 	urls = re.findall(r"https?://[^\s\)]+", result)
 	return [{"url": url} for url in urls[:10]]
+
+
+def _normalize_summary_text(summary: str) -> str:
+	text = summary.strip()
+	if not text:
+		return "Bu makale icin ozet olusturulamadi."
+
+	# Remove common markdown wrappers from model output.
+	text = re.sub(r"^```[a-zA-Z]*", "", text).strip()
+	text = re.sub(r"```$", "", text).strip()
+	text = text.replace("**", "").replace("__", "")
+	return text[:1200]

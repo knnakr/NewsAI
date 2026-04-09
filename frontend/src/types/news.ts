@@ -12,4 +12,18 @@ export interface SavedArticle extends Article {
 	saved_at: string;
 }
 
+export interface SummarizeArticleRequest {
+	title: string;
+	url: string;
+	source_name: string;
+	published_at: string | null;
+	category: string;
+}
+
+export interface SummarizeArticleResponse {
+	url: string;
+	ai_summary: string;
+	cached: boolean;
+}
+
 export type FeedPeriod = 'today' | 'week' | 'month';

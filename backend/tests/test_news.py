@@ -342,6 +342,165 @@ async def test_get_news_feed_response_has_required_fields(client, monkeypatch):
 	assert "category" in article
 
 
+async def test_summarize_article_returns_cached_summary(client, monkeypatch):
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return [
+			{
+				"title": "Cached",
+				"url": "https://example.com/a",
+				"source_name": "Example",
+				"published_at": None,
+				"ai_summary": "Cached summary",
+				"category": "technology",
+			}
+		]
+
+	mock_summary = AsyncMock(return_value="Should not run")
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/a",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 200
+	assert response.json()["cached"] is True
+	assert response.json()["ai_summary"] == "Cached summary"
+	mock_summary.assert_not_called()
+
+
+async def test_summarize_article_generates_and_stores_summary(client, monkeypatch):
+	set_cache_calls = {"count": 0}
+
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return None
+
+	async def fake_set_cached_articles(cache_key, articles, category, db):
+		set_cache_calls["count"] += 1
+		assert articles[0]["ai_summary"] == "Generated summary"
+
+	mock_summary = AsyncMock(return_value="Generated summary")
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.set_cached_articles", fake_set_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/new",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 200
+	assert response.json()["cached"] is False
+	assert response.json()["ai_summary"] == "Generated summary"
+	assert set_cache_calls["count"] == 1
+	mock_summary.assert_awaited_once()
+
+
+async def test_summarize_article_rate_limit_maps_to_429(client, monkeypatch):
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return None
+
+	mock_summary = AsyncMock(side_effect=Exception("RateLimitError: rate limit reached"))
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/rate",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 429
+	assert response.json()["detail"]["error_type"] == "rate_limit"
+
+
+async def test_summarize_article_too_many_requests_maps_to_429(client, monkeypatch):
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return None
+
+	mock_summary = AsyncMock(side_effect=Exception("Too many requests from provider"))
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/tmr",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 429
+	assert response.json()["detail"]["error_type"] == "too_many_requests"
+
+
+async def test_summarize_article_timeout_maps_to_504(client, monkeypatch):
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return None
+
+	mock_summary = AsyncMock(side_effect=Exception("ReadTimeout: request timed out"))
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/timeout",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 504
+	assert response.json()["detail"]["error_type"] == "timeout"
+
+
+async def test_summarize_article_unknown_error_maps_to_502(client, monkeypatch):
+	async def fake_get_cached_articles(cache_key, db, increment_view_count=False):
+		return None
+
+	mock_summary = AsyncMock(side_effect=Exception("Unexpected provider crash"))
+	monkeypatch.setattr("app.routers.news.get_cached_articles", fake_get_cached_articles)
+	monkeypatch.setattr("app.routers.news.run_article_summary_crew", mock_summary)
+
+	response = await client.post(
+		"/news/summarize",
+		json={
+			"title": "Some article",
+			"url": "https://example.com/gateway",
+			"source_name": "Example",
+			"published_at": None,
+			"category": "technology",
+		},
+	)
+
+	assert response.status_code == 502
+	assert response.json()["detail"]["error_type"] == "bad_gateway"
+
+
 async def test_get_trending_returns_article_list(client, mock_newsapi):
 	response = await client.get("/news/trending")
 

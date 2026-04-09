@@ -18,3 +18,11 @@ crews:
       - verdict
     process: sequential
     verbose: true
+
+  summarize_news:
+    agents:
+      - summarize_analyst
+    tasks:
+      - summarize_article
+    process: sequential
+    verbose: true

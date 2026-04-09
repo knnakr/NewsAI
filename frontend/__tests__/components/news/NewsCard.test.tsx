@@ -27,6 +27,19 @@ describe('NewsCard', () => {
     expect(screen.getByRole('button', { name: /summarize/i })).toBeInTheDocument()
   })
 
+  test('calls onSummarize when summarize button is clicked', () => {
+    const articleWithoutSummary: Article = {
+      ...mockArticle,
+      ai_summary: null,
+    }
+    const onSummarize = jest.fn()
+
+    render(<NewsCard article={articleWithoutSummary} onSummarize={onSummarize} />)
+    fireEvent.click(screen.getByRole('button', { name: /summarize/i }))
+
+    expect(onSummarize).toHaveBeenCalledWith(articleWithoutSummary)
+  })
+
   test('does not show Summarize button when ai_summary exists', () => {
     render(<NewsCard article={mockArticle} />)
     expect(screen.queryByRole('button', { name: /summarize/i })).not.toBeInTheDocument()
@@ -51,9 +64,14 @@ describe('NewsCard', () => {
     expect(screen.getByText('Summary text')).toBeInTheDocument()
   })
 
-  test('displays article source', () => {
+  test('toggles summary panel visibility', () => {
     render(<NewsCard article={mockArticle} />)
-    expect(screen.getByText('BBC')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Summary text')).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: /hide summary/i }))
+    expect(screen.queryByText('Summary text')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /show summary/i }))
+    expect(screen.getByText('Summary text')).toBeInTheDocument()
   })
+})

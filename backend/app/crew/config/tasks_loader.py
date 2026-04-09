@@ -24,7 +24,19 @@ def load_task_configs() -> TasksFileConfig:
 	return TasksFileConfig.model_validate(data)
 
 
-def build_tasks(*, agents: dict, user_message: str = "", conversation_history: list[dict] | None = None, claim: str = "") -> dict[str, Task]:
+def build_tasks(
+	*,
+	agents: dict,
+	user_message: str = "",
+	conversation_history: list[dict] | None = None,
+	claim: str = "",
+	article_url: str = "",
+	article_title: str = "",
+	article_source: str = "",
+	article_category: str = "",
+	language: str = "Turkish",
+	ai_tone: str = "neutral",
+) -> dict[str, Task]:
 	config = load_task_configs()
 	history = conversation_history or []
 	history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history[-10:]])
@@ -33,6 +45,12 @@ def build_tasks(*, agents: dict, user_message: str = "", conversation_history: l
 		user_message=user_message,
 		conversation_history_text=history_text,
 		claim=claim,
+		article_url=article_url,
+		article_title=article_title,
+		article_source=article_source,
+		article_category=article_category,
+		language=language,
+		ai_tone=ai_tone,
 		current_date=now_utc.date().isoformat(),
 		current_year=str(now_utc.year),
 	)

@@ -27,4 +27,26 @@ describe('TrendingCard', () => {
     expect(link).toHaveAttribute('href', article.url)
     expect(link).toHaveAttribute('target', '_blank')
   })
+
+  test('shows summarize button when ai_summary is missing', () => {
+    render(<TrendingCard article={{ ...article, ai_summary: null }} />)
+
+    expect(screen.getByRole('button', { name: /summarize/i })).toBeInTheDocument()
+  })
+
+  test('calls onSummarize when summarize button is clicked', () => {
+    const onSummarize = jest.fn()
+    const summarizeTarget = { ...article, ai_summary: null }
+
+    render(<TrendingCard article={summarizeTarget} onSummarize={onSummarize} />)
+    screen.getByRole('button', { name: /summarize/i }).click()
+
+    expect(onSummarize).toHaveBeenCalledWith(summarizeTarget)
+  })
+
+  test('does not show summarize button when ai_summary exists', () => {
+    render(<TrendingCard article={article} />)
+
+    expect(screen.queryByRole('button', { name: /summarize/i })).not.toBeInTheDocument()
+  })
 })

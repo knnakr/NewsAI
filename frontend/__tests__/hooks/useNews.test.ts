@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { useCategoryNews, useNewsFeed, useSaveArticle, useSavedArticles } from '@/hooks/useNews'
+import { useCategoryNews, useNewsFeed, useSaveArticle, useSavedArticles, useSummarizeArticle } from '@/hooks/useNews'
 import { api } from '@/lib/api'
 import { createWrapper } from '../test-utils'
 import { toast } from 'sonner'
@@ -226,6 +226,118 @@ describe('News Hooks', () => {
       result.current.mutate(article)
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    })
+  })
+
+  describe('useSummarizeArticle', () => {
+    test('calls summarize endpoint with article payload', async () => {
+      const article: Article = {
+        title: 'Summary Target',
+        url: 'http://summary.com',
+        source_name: 'BBC',
+        published_at: '2026-04-09T12:00:00Z',
+        ai_summary: null,
+        category: 'world',
+      }
+
+      ;(api.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          url: article.url,
+          ai_summary: 'Generated summary',
+          cached: false,
+        },
+      })
+
+      const { result } = renderHook(() => useSummarizeArticle(), { wrapper: createWrapper() })
+
+      result.current.mutate({
+        title: article.title,
+        url: article.url,
+        source_name: article.source_name,
+        published_at: article.published_at,
+        category: article.category,
+      })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(api.post).toHaveBeenCalledWith('/news/summarize', {
+        title: article.title,
+        url: article.url,
+        source_name: article.source_name,
+        published_at: article.published_at,
+        category: article.category,
+      })
+      expect(toast.success).toHaveBeenCalled()
+    })
+
+    test('shows error toast when summarize fails', async () => {
+      ;(api.post as jest.Mock).mockRejectedValueOnce(new Error('Summarize failed'))
+
+      const { result } = renderHook(() => useSummarizeArticle(), { wrapper: createWrapper() })
+
+      result.current.mutate({
+        title: 'Article',
+        url: 'http://summary.com/error',
+        source_name: 'BBC',
+        published_at: null,
+        category: 'world',
+      })
+
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(toast.error).toHaveBeenCalled()
+    })
+
+    test('shows rate-limit specific toast when summarize returns 429 detail', async () => {
+      ;(api.post as jest.Mock).mockRejectedValueOnce({
+        response: {
+          status: 429,
+          data: {
+            detail: {
+              error_type: 'too_many_requests',
+              message: 'Too many requests',
+            },
+          },
+        },
+      })
+
+      const { result } = renderHook(() => useSummarizeArticle(), { wrapper: createWrapper() })
+
+      result.current.mutate({
+        title: 'Article',
+        url: 'http://summary.com/rate-limit',
+        source_name: 'BBC',
+        published_at: null,
+        category: 'world',
+      })
+
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('(429)'))
+    })
+
+    test('shows timeout-specific toast when summarize returns 504 detail', async () => {
+      ;(api.post as jest.Mock).mockRejectedValueOnce({
+        response: {
+          status: 504,
+          data: {
+            detail: {
+              error_type: 'timeout',
+              message: 'Timed out',
+            },
+          },
+        },
+      })
+
+      const { result } = renderHook(() => useSummarizeArticle(), { wrapper: createWrapper() })
+
+      result.current.mutate({
+        title: 'Article',
+        url: 'http://summary.com/timeout',
+        source_name: 'BBC',
+        published_at: null,
+        category: 'world',
+      })
+
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('(504)'))
     })
   })
 })

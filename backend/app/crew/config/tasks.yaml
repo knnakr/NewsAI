@@ -48,3 +48,19 @@ tasks:
     agent_ref: verdict_agent
     context:
       - research_claim
+
+  summarize_article:
+    description: |
+      Asagidaki makaleyi ozetle:
+      - Baslik: {article_title}
+      - Kaynak: {article_source}
+      - Kategori: {article_category}
+      - URL: {article_url}
+
+      `summarize_article` aracini kullanarak icerigi cikar.
+      Cikti 3-4 cumlelik, tek paragraf, {language} dilinde ve {ai_tone} tonda olsun.
+      Bilinmeyen bilgi uretme, yalnizca kaynak icerigine dayan.
+      Ciktiya markdown, madde listesi veya kaynak listesi ekleme.
+    expected_output: "Sadece ozet metni; 3-4 cumle, duz yazi."
+    agent_ref: summarize_analyst
+    context: []

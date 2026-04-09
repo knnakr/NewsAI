@@ -64,3 +64,39 @@ class SavedArticleResponse(ArticleResponse):
 			}
 		},
 	)
+
+
+class SummarizeArticleRequest(BaseModel):
+	title: str
+	url: str
+	source_name: str
+	published_at: str | None = None
+	category: str
+
+	model_config = ConfigDict(
+		json_schema_extra={
+			"example": {
+				"title": "Example article",
+				"url": "https://example.com/article",
+				"source_name": "Example Source",
+				"published_at": "2026-04-05T12:00:00Z",
+				"category": "technology",
+			}
+		}
+	)
+
+
+class SummarizeArticleResponse(BaseModel):
+	url: str
+	ai_summary: str
+	cached: bool = False
+
+	model_config = ConfigDict(
+		json_schema_extra={
+			"example": {
+				"url": "https://example.com/article",
+				"ai_summary": "This article explains the latest AI chip launch and its market impact.",
+				"cached": True,
+			}
+		}
+	)

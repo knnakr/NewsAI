@@ -3,10 +3,38 @@ import type { AxiosError } from 'axios'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
-import type { Article, SavedArticle, FeedPeriod } from '@/types/news'
+import type {
+  Article,
+  SavedArticle,
+  FeedPeriod,
+  SummarizeArticleRequest,
+  SummarizeArticleResponse,
+} from '@/types/news'
 
 type ApiErrorResponse = {
   status?: number
+  detail?:
+    | string
+    | {
+        error_type?: string
+        message?: string
+        provider_detail?: string
+      }
+}
+
+function updateArticleSummaryInList(data: unknown, url: string, summary: string) {
+  if (!Array.isArray(data)) return data
+  return data.map((item) => {
+    if (!item || typeof item !== 'object') return item
+
+    const article = item as Article
+    if (article.url !== url) return article
+
+    return {
+      ...article,
+      ai_summary: summary,
+    }
+  })
 }
 
 export function useNewsFeed(category: string, period: FeedPeriod) {
@@ -53,6 +81,60 @@ export function useSaveArticle() {
       } else {
         toast.error('Makale kaydedilirken bir hata oluştu.')
       }
+    },
+  })
+}
+
+export function useSummarizeArticle() {
+  return useMutation({
+    mutationFn: async (article: SummarizeArticleRequest) => {
+      const { data } = await api.post<SummarizeArticleResponse>('/news/summarize', article)
+      return data
+    },
+    onSuccess: (data, variables) => {
+      const url = variables.url
+      const summary = data.ai_summary
+
+      queryClient.setQueriesData({ queryKey: ['news-feed'] }, (oldData) =>
+        updateArticleSummaryInList(oldData, url, summary)
+      )
+      queryClient.setQueriesData({ queryKey: ['category-news'] }, (oldData) =>
+        updateArticleSummaryInList(oldData, url, summary)
+      )
+      queryClient.setQueriesData({ queryKey: ['trending'] }, (oldData) =>
+        updateArticleSummaryInList(oldData, url, summary)
+      )
+
+      toast.success(data.cached ? 'Summary loaded from cache.' : 'Summary generated successfully!')
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>
+      const detail = axiosError.response?.data?.detail
+
+      if (detail && typeof detail === 'object') {
+        const errorType = detail.error_type
+
+        if (detail.provider_detail) {
+          console.warn('Summarize provider error:', detail.provider_detail)
+        }
+
+        if (errorType === 'rate_limit' || errorType === 'too_many_requests') {
+          toast.error('Ozet servisi yogun (429). Lutfen biraz sonra tekrar deneyin.')
+          return
+        }
+
+        if (errorType === 'timeout') {
+          toast.error('Ozet olusturma zaman asimina ugradi (504). Lutfen tekrar deneyin.')
+          return
+        }
+
+        if (errorType === 'bad_gateway') {
+          toast.error('Saglayici gecici hata verdi (502). Lutfen tekrar deneyin.')
+          return
+        }
+      }
+
+      toast.error('Makale ozeti olusturulamadi.')
     },
   })
 }

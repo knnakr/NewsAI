@@ -1,8 +1,10 @@
+import hashlib
+import logging
 from typing import Literal
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,12 +12,56 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.news import ArticleCache, SavedArticle
 from app.models.user import User
-from app.schemas.news import ArticleResponse, SaveArticleRequest, SavedArticleResponse
+from app.schemas.news import (
+	ArticleResponse,
+	SaveArticleRequest,
+	SavedArticleResponse,
+	SummarizeArticleRequest,
+	SummarizeArticleResponse,
+)
+from app.services.crew_service import run_article_summary_crew
 from app.services.news_service import get_or_fetch_articles, get_trending_articles
 from app.utils.cache import build_cache_key, get_cached_articles, set_cached_articles
 
 
 router = APIRouter(prefix="/news", tags=["news"])
+logger = logging.getLogger("newsai")
+
+
+def _summary_cache_key(category: str, url: str) -> str:
+	hash_part = hashlib.sha256(url.encode("utf-8")).hexdigest()[:24]
+	return f"summary:{category}:{hash_part}"
+
+
+def _classify_summary_error(exc: Exception) -> tuple[int, str, str]:
+	message = str(exc)
+	normalized = message.lower()
+
+	if any(token in normalized for token in ["rate limit", "ratelimit", "too many requests", "429"]):
+		if "too many requests" in normalized or "429" in normalized:
+			return (
+				status.HTTP_429_TOO_MANY_REQUESTS,
+				"too_many_requests",
+				"Summarize istegi reddedildi: provider 'too many requests' dondu.",
+			)
+		return (
+			status.HTTP_429_TOO_MANY_REQUESTS,
+			"rate_limit",
+			"Summarize limiti asildi: provider rate-limit uyguladi.",
+		)
+
+	if any(token in normalized for token in ["timeout", "timed out", "readtimeout", "connecttimeout"]):
+		return (
+			status.HTTP_504_GATEWAY_TIMEOUT,
+			"timeout",
+			"Summarize zaman asimina ugradi.",
+		)
+
+	return (
+		status.HTTP_502_BAD_GATEWAY,
+		"bad_gateway",
+		"Summarize istegi upstream servis hatasi nedeniyle basarisiz oldu.",
+	)
 
 
 @router.get(
@@ -235,3 +281,75 @@ async def delete_saved_article(
 	await db.delete(article)
 	await db.commit()
 	return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+	"/summarize",
+	response_model=SummarizeArticleResponse,
+	status_code=status.HTTP_200_OK,
+	summary="Summarize an article",
+	description="Tek bir haberi CrewAI summarize akisiyla ozetler ve sonucu cache'e yazar.",
+)
+async def summarize_article(
+	body: SummarizeArticleRequest,
+	db: AsyncSession = Depends(get_db),
+):
+	cache_key = _summary_cache_key(body.category, body.url)
+	cached_articles = await get_cached_articles(cache_key, db)
+	if cached_articles:
+		cached_summary = (cached_articles[0] or {}).get("ai_summary")
+		if cached_summary:
+			return {
+				"url": body.url,
+				"ai_summary": cached_summary,
+				"cached": True,
+			}
+
+	try:
+		summary = await run_article_summary_crew(
+			article_url=body.url,
+			article_title=body.title,
+			article_source=body.source_name,
+			article_category=body.category,
+		)
+	except Exception as exc:
+		status_code, error_type, error_message = _classify_summary_error(exc)
+		logger.warning(
+			"Summarize failed: type=%s status=%s url=%s detail=%s",
+			error_type,
+			status_code,
+			body.url,
+			str(exc),
+		)
+		raise HTTPException(
+			status_code=status_code,
+			detail={
+				"error_type": error_type,
+				"message": error_message,
+				"provider_detail": str(exc),
+			},
+		) from exc
+
+	summary_article = {
+		"title": body.title,
+		"url": body.url,
+		"source_name": body.source_name,
+		"published_at": body.published_at,
+		"ai_summary": summary,
+		"category": body.category,
+	}
+	await set_cached_articles(cache_key, [summary_article], body.category, db)
+
+	# Keep saved-article summaries in sync for users who already bookmarked this URL.
+	await db.execute(
+		update(SavedArticle)
+		.where(SavedArticle.article_url == body.url)
+		.values(ai_summary=summary)
+	)
+	await db.commit()
+
+	return {
+		"url": body.url,
+		"ai_summary": summary,
+		"cached": False,
+	}

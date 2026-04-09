@@ -26,6 +26,8 @@ class CrewFactory:
 			agents=agents,
 			user_message=user_message,
 			conversation_history=conversation_history,
+			language=language,
+			ai_tone=ai_tone,
 		)
 		crews = build_crews(agents=agents, tasks=tasks, step_callback=step_callback)
 		return crews["news"]
@@ -46,3 +48,26 @@ class CrewFactory:
 		tasks = build_tasks(agents=agents, claim=claim)
 		crews = build_crews(agents=agents, tasks=tasks)
 		return crews["fact_check"]
+
+	@staticmethod
+	def create_news_summary_crew(
+		*,
+		article_url: str,
+		article_title: str,
+		article_source: str,
+		article_category: str,
+		language: str = "Turkish",
+		ai_tone: str = "neutral",
+	) -> Crew:
+		agents = build_agents(language=language, ai_tone=ai_tone)
+		tasks = build_tasks(
+			agents=agents,
+			article_url=article_url,
+			article_title=article_title,
+			article_source=article_source,
+			article_category=article_category,
+			language=language,
+			ai_tone=ai_tone,
+		)
+		crews = build_crews(agents=agents, tasks=tasks)
+		return crews["summarize_news"]

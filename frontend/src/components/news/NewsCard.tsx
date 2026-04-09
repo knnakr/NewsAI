@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Bookmark, BookmarkCheck, Zap, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import type { Article } from '@/types/news'
@@ -8,6 +8,9 @@ import type { Article } from '@/types/news'
 interface NewsCardProps {
   article: Article
   onSave?: (article: Article) => void
+  onSummarize?: (article: Article) => void
+  isSummarizing?: boolean
+  summaryError?: string | null
 }
 
 const formatDate = (dateString: string | null): string => {
@@ -16,12 +19,23 @@ const formatDate = (dateString: string | null): string => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export function NewsCard({ article, onSave }: NewsCardProps) {
+export function NewsCard({ article, onSave, onSummarize, isSummarizing = false, summaryError = null }: NewsCardProps) {
   const [isSaved, setIsSaved] = useState(false)
+  const [isSummaryOpen, setIsSummaryOpen] = useState(Boolean(article.ai_summary))
+
+  useEffect(() => {
+    if (article.ai_summary) {
+      setIsSummaryOpen(true)
+    }
+  }, [article.ai_summary])
 
   const handleSave = () => {
     onSave?.(article)
     setIsSaved(!isSaved)
+  }
+
+  const handleSummarize = () => {
+    onSummarize?.(article)
   }
 
   return (
@@ -41,16 +55,41 @@ export function NewsCard({ article, onSave }: NewsCardProps) {
       {/* Title */}
       <h3 className="mb-2 line-clamp-2 text-lg font-bold text-text-primary hover:text-accent-blue">{article.title}</h3>
 
-      {/* AI Summary */}
-      {article.ai_summary && <p className="mb-3 line-clamp-2 text-sm text-text-secondary">{article.ai_summary}</p>}
+      {article.ai_summary && isSummaryOpen && (
+        <div className="mb-3 rounded-md border border-navy-600 bg-navy-900/60 p-3">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent-blue">AI Summary</p>
+          <p className="text-sm text-text-secondary">{article.ai_summary}</p>
+        </div>
+      )}
+
+      {!article.ai_summary && summaryError ? (
+        <p className="mb-3 text-xs text-red-400">{summaryError}</p>
+      ) : null}
 
       {/* Footer: Date and Buttons */}
       <div className="mt-auto flex items-end justify-between gap-2">
         <span className="text-xs text-text-muted">{formatDate(article.published_at)}</span>
 
         <div className="flex gap-2">
-          {!article.ai_summary && (
-            <Button size="sm" variant="secondary" className="flex items-center gap-1">
+          {article.ai_summary ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex items-center gap-1"
+              onClick={() => setIsSummaryOpen((prev) => !prev)}
+            >
+              <Zap className="h-3 w-3" />
+              {isSummaryOpen ? 'Hide Summary' : 'Show Summary'}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex items-center gap-1"
+              onClick={handleSummarize}
+              loading={isSummarizing}
+              disabled={!onSummarize && !isSummarizing}
+            >
               <Zap className="h-3 w-3" />
               Summarize
             </Button>

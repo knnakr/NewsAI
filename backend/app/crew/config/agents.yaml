@@ -20,6 +20,16 @@ agents:
     llm_profile: default
     verbose: true
 
+  summarize_analyst:
+    role: "Summarize Analyst"
+    goal: "Verilen haber URL'sinden gelen icerigi kisa, net ve dogru bir ozet haline getir."
+    backstory: "Sen haber metinlerini hizli okuyup ozunu cikaran uzman bir editorsun. Spekulasyondan kacinir, yalnizca metindeki bilgiye dayanirsin."
+    tools:
+      - summarize_article
+    llm_profile: default
+    max_iter: 3
+    verbose: true
+
   fact_checker:
     role: "Fact Checker"
     goal: "Iddiayi birden fazla bagimsiz kaynakta arastir."

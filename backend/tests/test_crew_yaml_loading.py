@@ -7,24 +7,28 @@ def test_agents_yaml_loads_with_expected_keys():
 	config = load_agent_configs()
 	assert "news_fetcher" in config.agents
 	assert "verdict_agent" in config.agents
+	assert "summarize_analyst" in config.agents
 
 
 def test_tasks_yaml_loads_with_expected_keys():
 	config = load_task_configs()
 	assert "fetch_news" in config.tasks
 	assert "verdict" in config.tasks
+	assert "summarize_article" in config.tasks
 
 
 def test_crews_yaml_loads_with_expected_keys():
 	config = load_crew_configs()
 	assert "news" in config.crews
 	assert "fact_check" in config.crews
+	assert "summarize_news" in config.crews
 
 
 def test_build_tasks_applies_runtime_templates():
 	agents = {
 		"news_fetcher": object(),
 		"news_analyst": object(),
+		"summarize_analyst": object(),
 		"fact_checker": object(),
 		"verdict_agent": object(),
 	}
@@ -53,4 +57,5 @@ def test_build_tasks_applies_runtime_templates():
 	assert "Tech news?" in tasks["fetch_news"].description
 	assert "old question" in tasks["fetch_news"].description
 	assert "The earth is flat" in tasks["research_claim"].description
+	assert "Asagidaki makaleyi ozetle" in tasks["summarize_article"].description
 	assert tasks["fetch_news"] in tasks["analyze_news"].context
