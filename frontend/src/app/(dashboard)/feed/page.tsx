@@ -8,7 +8,7 @@ import { NewsCardSkeleton } from '@/components/news/NewsCardSkeleton'
 import { PeriodFilter } from '@/components/news/PeriodFilter'
 import type { FeedPeriod, Article } from '@/types/news'
 
-const categories = ['world', 'technology', 'business', 'sports', 'entertainment']
+const categories = ['world', 'technology', 'sports', 'entertainment']
 
 export default function FeedPage() {
   const [activePeriod, setActivePeriod] = useState<FeedPeriod>('today')

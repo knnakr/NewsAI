@@ -28,6 +28,8 @@ async def get_cached_articles(
 	entry = result.scalar_one_or_none()
 	if not entry:
 		return None
+	if not entry.articles_json:
+		return None
 
 	entry.request_count += 1
 	if increment_view_count:
