@@ -80,12 +80,14 @@ async def test_openapi_schemas_include_examples(client):
         "UserPreferencesResponse": {
             "language": "Turkish",
             "ai_tone": "neutral",
+            "orchestrator": "crewai",
             "news_categories": ["world", "technology"],
             "email_digest": False,
         },
         "UpdatePreferencesRequest": {
             "language": "English",
             "ai_tone": "formal",
+            "orchestrator": "langgraph",
             "news_categories": ["technology"],
             "email_digest": True,
         },

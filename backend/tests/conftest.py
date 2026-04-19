@@ -62,12 +62,14 @@ async def _create_triggers(conn):
             user_id,
             language,
             ai_tone,
+            orchestrator,
             news_categories,
             email_digest
         ) VALUES (
             NEW.id,
             'Turkish',
             'neutral',
+            'crewai',
             '["world", "technology", "sports"]'::jsonb,
             FALSE
         );

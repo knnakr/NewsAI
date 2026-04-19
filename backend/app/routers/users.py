@@ -101,6 +101,8 @@ async def patch_preferences(
 		preferences.language = payload.language
 	if payload.ai_tone is not None:
 		preferences.ai_tone = payload.ai_tone
+	if payload.orchestrator is not None:
+		preferences.orchestrator = payload.orchestrator
 	if payload.news_categories is not None:
 		preferences.news_categories = payload.news_categories
 	if payload.email_digest is not None:

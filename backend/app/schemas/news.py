@@ -30,7 +30,7 @@ class SaveArticleRequest(BaseModel):
 	title: str
 	url: str
 	source_name: str
-	published_at: str | None = None
+	published_at: datetime | None = None
 	category: str
 
 	model_config = ConfigDict(

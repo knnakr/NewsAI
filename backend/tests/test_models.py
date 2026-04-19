@@ -46,6 +46,24 @@ async def test_user_preferences_trigger_creates_row_on_user_insert(db):
     assert count == 1, "Trigger user_preferences satırı oluşturmadı"
 
 
+async def test_user_preferences_trigger_sets_default_orchestrator(db):
+    """Verify triggered user_preferences row defaults orchestrator to crewai."""
+    await db.execute(text(
+        "INSERT INTO users (id, email, display_name, hashed_password, role, auth_provider, failed_login_count) "
+        "VALUES (gen_random_uuid(), 'orchestrator@test.com', 'Orchestrator User', 'hashed', 'user', 'email', 0)"
+    ))
+    await db.commit()
+
+    result = await db.execute(
+        text(
+            "SELECT orchestrator FROM user_preferences WHERE user_id = "
+            "(SELECT id FROM users WHERE email = 'orchestrator@test.com')"
+        )
+    )
+    orchestrator = result.scalar()
+    assert orchestrator == "crewai"
+
+
 async def test_agent_tool_enum_values(db):
     """Verify agent_tool ENUM contains expected values."""
     expected_values = {
@@ -67,6 +85,16 @@ async def test_fact_verdict_enum_values(db):
     expected_values = {"TRUE", "FALSE", "UNVERIFIED"}
     result = await db.execute(
         text("SELECT unnest(enum_range(NULL::fact_verdict))::text")
+    )
+    actual_values = {row[0] for row in result.fetchall()}
+    assert actual_values == expected_values, f"Expected {expected_values}, got {actual_values}"
+
+
+async def test_user_orchestrator_enum_values(db):
+    """Verify user_orchestrator ENUM contains expected values."""
+    expected_values = {"crewai", "langgraph"}
+    result = await db.execute(
+        text("SELECT unnest(enum_range(NULL::user_orchestrator))::text")
     )
     actual_values = {row[0] for row in result.fetchall()}
     assert actual_values == expected_values, f"Expected {expected_values}, got {actual_values}"

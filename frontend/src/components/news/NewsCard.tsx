@@ -11,6 +11,7 @@ interface NewsCardProps {
   onSummarize?: (article: Article) => void
   isSummarizing?: boolean
   summaryError?: string | null
+  showSaveButton?: boolean
 }
 
 const formatDate = (dateString: string | null): string => {
@@ -19,7 +20,14 @@ const formatDate = (dateString: string | null): string => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export function NewsCard({ article, onSave, onSummarize, isSummarizing = false, summaryError = null }: NewsCardProps) {
+export function NewsCard({
+  article,
+  onSave,
+  onSummarize,
+  isSummarizing = false,
+  summaryError = null,
+  showSaveButton = true,
+}: NewsCardProps) {
   const [isSaved, setIsSaved] = useState(false)
   const [isSummaryOpen, setIsSummaryOpen] = useState(Boolean(article.ai_summary))
 
@@ -30,6 +38,7 @@ export function NewsCard({ article, onSave, onSummarize, isSummarizing = false, 
   }, [article.ai_summary])
 
   const handleSave = () => {
+    if (!onSave) return
     onSave?.(article)
     setIsSaved(!isSaved)
   }
@@ -43,13 +52,17 @@ export function NewsCard({ article, onSave, onSummarize, isSummarizing = false, 
       {/* Header: Source and Bookmark */}
       <div className="mb-3 flex items-start justify-between">
         <span className="text-xs font-medium uppercase tracking-wider text-accent-blue">{article.source_name}</span>
-        <button
-          onClick={handleSave}
-          className="text-text-muted transition-colors hover:text-accent-blue"
-          aria-label={isSaved ? 'Remove bookmark' : 'Bookmark article'}
-        >
-          {isSaved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-        </button>
+        {showSaveButton ? (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!onSave}
+            className="text-text-muted transition-colors hover:text-accent-blue disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-muted"
+            aria-label={isSaved ? 'Remove bookmark' : 'Bookmark article'}
+          >
+            {isSaved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+          </button>
+        ) : null}
       </div>
 
       {/* Title */}

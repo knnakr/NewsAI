@@ -2,7 +2,7 @@
 Pydantic schemas for user authentication and profile management.
 """
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 import uuid
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 
@@ -117,6 +117,7 @@ class UserPreferencesResponse(BaseModel):
     """Response schema for user preferences."""
     language: str
     ai_tone: str
+    orchestrator: Literal["crewai", "langgraph"]
     news_categories: List[str]
     email_digest: bool
 
@@ -126,6 +127,7 @@ class UserPreferencesResponse(BaseModel):
             "example": {
                 "language": "Turkish",
                 "ai_tone": "neutral",
+                "orchestrator": "crewai",
                 "news_categories": ["world", "technology"],
                 "email_digest": False,
             }
@@ -137,6 +139,7 @@ class UpdatePreferencesRequest(BaseModel):
     """Request schema for updating user preferences."""
     language: Optional[str] = None
     ai_tone: Optional[str] = None
+    orchestrator: Optional[Literal["crewai", "langgraph"]] = None
     news_categories: Optional[List[str]] = None
     email_digest: Optional[bool] = None
 
@@ -145,6 +148,7 @@ class UpdatePreferencesRequest(BaseModel):
             "example": {
                 "language": "English",
                 "ai_tone": "formal",
+                "orchestrator": "langgraph",
                 "news_categories": ["technology"],
                 "email_digest": True,
             }

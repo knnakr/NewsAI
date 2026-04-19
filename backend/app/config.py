@@ -20,8 +20,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "production"] = "development"
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
 
-    GROQ_MODEL_DEFAULT: str = "groq/compound-mini"
-    GROQ_MODEL_REASONING: str = "groq/compound"
+    GROQ_MODEL_DEFAULT: str = "groq/meta-llama/llama-4-scout-17b-16e-instruct"
+    GROQ_MODEL_REASONING: str = "groq/meta-llama/llama-4-scout-17b-16e-instruct"
+    ENABLE_LANGGRAPH: bool = False
+    LANGGRAPH_RECURSION_LIMIT: int = 25
+    LANGSMITH_TRACING: bool = False
+    LANGSMITH_API_KEY: str | None = None
+    LANGSMITH_PROJECT: str = "newsai-langgraph"
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
 
     ARTICLE_CACHE_TTL_HOURS: int = 6
 

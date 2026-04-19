@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
@@ -9,7 +9,16 @@ import { api } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 
 type AITone = "Neutral" | "Formal" | "Casual";
-type Language = "TR" | "EN";
+type Language = "Turkish" | "English";
+type Orchestrator = "crewai" | "langgraph";
+
+type PreferencesResponse = {
+	language?: string;
+	ai_tone?: string;
+	orchestrator?: string;
+	news_categories?: string[];
+	email_digest?: boolean;
+};
 
 const AVAILABLE_CATEGORIES = ["world", "economy", "sports", "technology"];
 
@@ -19,10 +28,47 @@ export default function SettingsPage() {
 
 	const [displayName, setDisplayName] = useState(user?.display_name ?? "");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-	const [language, setLanguage] = useState<Language>("TR");
+	const [language, setLanguage] = useState<Language>("Turkish");
 	const [aiTone, setAiTone] = useState<AITone>("Neutral");
+	const [orchestrator, setOrchestrator] = useState<Orchestrator>("crewai");
 	const [emailDigestEnabled, setEmailDigestEnabled] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+
+	useEffect(() => {
+		const loadPreferences = async () => {
+			try {
+				const response = await api.get<PreferencesResponse>("/users/me/preferences");
+				const preferences = response.data;
+
+				if (preferences.language === "English" || preferences.language === "Turkish") {
+					setLanguage(preferences.language);
+				}
+
+				if (preferences.ai_tone === "neutral" || preferences.ai_tone === "formal" || preferences.ai_tone === "casual") {
+					setAiTone((preferences.ai_tone[0].toUpperCase() + preferences.ai_tone.slice(1)) as AITone);
+				}
+
+				if (preferences.orchestrator === "crewai" || preferences.orchestrator === "langgraph") {
+					setOrchestrator(preferences.orchestrator);
+				}
+
+				if (Array.isArray(preferences.news_categories)) {
+					setSelectedCategories(preferences.news_categories);
+				}
+
+				if (typeof preferences.email_digest === "boolean") {
+					setEmailDigestEnabled(preferences.email_digest);
+				}
+			} catch {
+				toast.error("Tercihler yuklenirken bir hata oluştu.");
+			} finally {
+				setIsLoadingPreferences(false);
+			}
+		};
+
+		void loadPreferences();
+	}, []);
 
 	const toggleCategory = (category: string) => {
 		setSelectedCategories((prev) =>
@@ -32,6 +78,9 @@ export default function SettingsPage() {
 
 	const handleSave = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (isLoadingPreferences) {
+			return;
+		}
 
 		setIsSaving(true);
 		const normalizedDisplayName = displayName.trim() || user?.display_name || "User";
@@ -42,9 +91,10 @@ export default function SettingsPage() {
 			});
 
 			await api.patch("/users/me/preferences", {
-				categories: selectedCategories,
+				news_categories: selectedCategories,
 				language,
-				ai_tone: aiTone,
+				ai_tone: aiTone.toLowerCase(),
+				orchestrator,
 				email_digest: emailDigestEnabled,
 			});
 
@@ -126,8 +176,8 @@ export default function SettingsPage() {
 										onChange={(event) => setLanguage(event.target.value as Language)}
 										className="h-10 w-full rounded-lg border border-navy-600 bg-navy-700 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-blue"
 									>
-										<option value="TR">TR</option>
-										<option value="EN">EN</option>
+										<option value="Turkish">Turkish</option>
+										<option value="English">English</option>
 									</select>
 								</div>
 
@@ -146,6 +196,23 @@ export default function SettingsPage() {
 										<option value="Formal">Formal</option>
 										<option value="Casual">Casual</option>
 									</select>
+								</div>
+
+								<div>
+									<label htmlFor="orchestrator" className="mb-1 block text-sm font-medium text-slate-200">
+										AI Orchestrator
+									</label>
+									<select
+										id="orchestrator"
+										name="orchestrator"
+										value={orchestrator}
+										onChange={(event) => setOrchestrator(event.target.value as Orchestrator)}
+										className="h-10 w-full rounded-lg border border-navy-600 bg-navy-700 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-blue"
+									>
+										<option value="crewai">CrewAI</option>
+										<option value="langgraph">LangGraph</option>
+									</select>
+									<p className="mt-1 text-xs text-slate-400">Settings-only secimdir. Form bazli override kapali.</p>
 								</div>
 							</div>
 
@@ -176,7 +243,7 @@ export default function SettingsPage() {
 					</section>
 
 					<div className="flex justify-end">
-						<Button type="submit" loading={isSaving}>
+						<Button type="submit" loading={isSaving} disabled={isLoadingPreferences}>
 							Degisiklikleri Kaydet
 						</Button>
 					</div>

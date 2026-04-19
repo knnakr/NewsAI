@@ -9,7 +9,7 @@ import { NewsCard } from '@/components/news/NewsCard'
 import { NewsCardSkeleton } from '@/components/news/NewsCardSkeleton'
 import { SubCategoryChips } from '@/components/news/SubCategoryChips'
 import { Button } from '@/components/ui/Button'
-import { useCategoryNews, useSummarizeArticle } from '@/hooks/useNews'
+import { useCategoryNews, useSaveArticle, useSummarizeArticle } from '@/hooks/useNews'
 import type { Article } from '@/types/news'
 
 const VALID_CATEGORIES = new Set([
@@ -40,6 +40,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [summarizingUrl, setSummarizingUrl] = useState<string | null>(null)
   const [summaryErrors, setSummaryErrors] = useState<Record<string, string>>({})
   const summarizeArticle = useSummarizeArticle()
+  const saveArticle = useSaveArticle()
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- this state mirrors URL query selection.
@@ -104,6 +105,10 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     }
   }
 
+  const handleSaveArticle = (article: Article) => {
+    saveArticle.mutate(article)
+  }
+
   if (!VALID_CATEGORIES.has(slug)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
@@ -150,6 +155,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-blue">Featured</p>
           <NewsCard
             article={featuredArticle}
+            onSave={handleSaveArticle}
             onSummarize={handleSummarizeArticle}
             isSummarizing={summarizingUrl === featuredArticle.url && summarizeArticle.isPending}
             summaryError={summaryErrors[featuredArticle.url] ?? null}
@@ -163,6 +169,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <NewsCard
               key={`${article.url}-${article.published_at}`}
               article={article}
+              onSave={handleSaveArticle}
               onSummarize={handleSummarizeArticle}
               isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
               summaryError={summaryErrors[article.url] ?? null}
@@ -177,6 +184,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <NewsCard
               key={`${article.url}-${article.published_at}`}
               article={article}
+              onSave={handleSaveArticle}
               onSummarize={handleSummarizeArticle}
               isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
               summaryError={summaryErrors[article.url] ?? null}
@@ -191,6 +199,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <NewsCard
               key={`${article.url}-${article.published_at}`}
               article={article}
+              onSave={handleSaveArticle}
               onSummarize={handleSummarizeArticle}
               isSummarizing={summarizingUrl === article.url && summarizeArticle.isPending}
               summaryError={summaryErrors[article.url] ?? null}

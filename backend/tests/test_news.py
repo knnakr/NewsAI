@@ -629,6 +629,7 @@ async def test_save_article_returns_201(client, auth_headers):
 			"title": "Test Article",
 			"url": "http://test.com/article",
 			"source_name": "Test Source",
+			"published_at": "2026-04-05T12:00:00Z",
 			"category": "technology",
 		},
 		headers=auth_headers,
@@ -636,6 +637,7 @@ async def test_save_article_returns_201(client, auth_headers):
 
 	assert response.status_code == 201
 	assert "id" in response.json()
+	assert response.json()["published_at"] is not None
 
 
 async def test_save_same_article_twice_returns_409(client, auth_headers):

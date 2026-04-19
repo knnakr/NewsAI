@@ -72,6 +72,12 @@ class UserPreferences(Base):
 		nullable=False,
 		default="neutral",
 	)
+	orchestrator: Mapped[str] = mapped_column(
+		SAEnum("crewai", "langgraph", name="user_orchestrator"),
+		nullable=False,
+		default="crewai",
+		server_default="crewai",
+	)
 	news_categories: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
 	email_digest: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 	updated_at: Mapped[datetime] = mapped_column(

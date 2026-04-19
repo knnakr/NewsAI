@@ -644,6 +644,7 @@ async def test_get_preferences_returns_defaults(client, auth_headers):
     data = response.json()
     assert data["language"] == "Turkish"
     assert data["ai_tone"] == "neutral"
+    assert data["orchestrator"] == "crewai"
 
 
 @pytest.mark.asyncio
@@ -656,6 +657,27 @@ async def test_patch_preferences_updates_language(client, auth_headers):
 @pytest.mark.asyncio
 async def test_patch_preferences_invalid_ai_tone_returns_422(client, auth_headers):
     response = await client.patch("/users/me/preferences", json={"ai_tone": "aggressive"}, headers=auth_headers)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_preferences_updates_orchestrator(client, auth_headers):
+    response = await client.patch(
+        "/users/me/preferences",
+        json={"orchestrator": "langgraph"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["orchestrator"] == "langgraph"
+
+
+@pytest.mark.asyncio
+async def test_patch_preferences_invalid_orchestrator_returns_422(client, auth_headers):
+    response = await client.patch(
+        "/users/me/preferences",
+        json={"orchestrator": "something-else"},
+        headers=auth_headers,
+    )
     assert response.status_code == 422
 
 

@@ -84,7 +84,7 @@ export default function SavedPage() {
 								</Button>
 								</div>
 							<div className="p-4">
-								<NewsCard article={article} />
+									<NewsCard article={article} showSaveButton={false} />
 							</div>
 						</Card>
 					))}
