@@ -26,8 +26,10 @@ class FetchTrendingTool(BaseTool):
 	description: str = "Trend haberleri getirir. Kullanıcı trending haberleri istediğinde kullan."
 	args_schema: type[BaseModel] = FetchTrendingInput
 
+	# Trend konu bilgisine göre haberleri servis katmanından asenkron şekilde toplar.
 	async def _arun(self, topic: str | None = None) -> list[dict]:
 		return await get_trending_articles(topic=topic)
 
+	# Senkron tool çağrısında trend haber çekme coroutine'ini yürütür.
 	def _run(self, topic: str | None = None) -> list[dict]:
 		return asyncio.run(self._arun(topic=topic))

@@ -1,3 +1,4 @@
+#tool registry: YAML'dan çağırılan tool isimlerini BaseTool'a çeviriyoruz
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -23,6 +24,7 @@ class ToolRegistry:
 			"summarize_article": SummarizeArticleTool,
 		}
 
+	# YAML'daki tool adlarını somut CrewAI tool örneklerine dönüştürür.
 	def create_tools(self, names: list[str]) -> list[BaseTool]:
 		tools: list[BaseTool] = []
 		for name in names:
@@ -33,6 +35,7 @@ class ToolRegistry:
 		return tools
 
 	@property
+	# Sistem tarafından desteklenen tüm tool anahtarlarını döndürür.
 	def available_tools(self) -> set[str]:
 		return set(self._tool_factories.keys())
 

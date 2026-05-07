@@ -25,10 +25,12 @@ from app.services.crew_service import run_chat_crew
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 
+ # SSE protokolüne uygun veri bloğunu tek satır yardımcıyla üretir.
 def _format_sse(data: dict) -> str:
 	return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+ # Crew adım nesnesinden istemciye aktarılabilir metin parçasını çıkarır.
 def _extract_step_token(payload) -> str | None:
 	for attribute in ("output", "result", "text"):
 		value = getattr(payload, attribute, None)
@@ -37,6 +39,7 @@ def _extract_step_token(payload) -> str | None:
 	return None
 
 
+ # Konuşmanın varlığını, sahipliğini ve silinme durumunu tek noktada doğrular.
 async def _get_user_conversation_or_raise(
 	conversation_id: uuid.UUID,
 	current_user_id: uuid.UUID,
@@ -182,6 +185,7 @@ async def archive_conversation(
 	summary="Send message",
 	description="Kullanıcı mesajını kaydeder, News Crew'u çalıştırır ve asistandan yanıt döndürür.",
 )
+ # Kullanıcı mesajını kaydeder, crew yanıtını üretir ve asistan mesajı olarak persist eder.
 async def send_message(
 	conversation_id: uuid.UUID,
 	message_body: MessageCreate,
@@ -256,6 +260,7 @@ async def send_message(
 	summary="Send streaming message",
 	description="Kullanıcı mesajını kaydeder ve CrewAI ara çıktıları ile SSE stream döndürür.",
 )
+ # Crew ara çıktıları ve final cevabı için SSE tabanlı akış yanıtı üretir.
 async def send_message_stream(
 	conversation_id: uuid.UUID,
 	message_body: MessageCreate,

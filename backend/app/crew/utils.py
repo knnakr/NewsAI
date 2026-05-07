@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 _context_stack: dict = {}
 
 
+ # Tool olaylarının doğru mesaj ve oturum bağlamıyla işlenmesi için istek bilgisini saklar.
 def set_tool_call_context(
     message_id: UUID,
     db: AsyncSession,
@@ -21,5 +22,6 @@ def set_tool_call_context(
         _context_stack["stream_queue"] = stream_queue
 
 
+ # İstek tamamlandığında bellek içi tool çağrı bağlamını temizler.
 def clear_tool_call_context():
     _context_stack.clear()

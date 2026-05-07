@@ -1,3 +1,6 @@
+#Neden önemli?
+#Router/service katmanı "hangi crew nasıl kuruluyor" detayını bilmiyor.
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -13,6 +16,7 @@ class CrewFactory:
 	"""Builds all CrewAI flows from YAML configuration."""
 
 	@staticmethod
+	# Genel sohbet ve haber yanıtı için News Crew akışını oluşturur.
 	def create_news_crew(
 		*,
 		user_message: str,
@@ -33,6 +37,7 @@ class CrewFactory:
 		return crews["news"]
 
 	@staticmethod
+	# İddia doğrulama için Fact Check Crew akışını oluşturur.
 	def create_fact_check_crew(
 		*,
 		claim: str,
@@ -50,6 +55,7 @@ class CrewFactory:
 		return crews["fact_check"]
 
 	@staticmethod
+	# Tekil haber özeti üretmek için özetleme odaklı crew akışını oluşturur.
 	def create_news_summary_crew(
 		*,
 		article_url: str,

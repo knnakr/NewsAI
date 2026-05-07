@@ -8,6 +8,7 @@ from app.models.conversation import AgentToolCall
 from app.crew.utils import _context_stack
 
 
+ # Varsa bağlı stream kuyruğuna tekil bir olay iletir.
 def _emit_stream_event(event: dict) -> None:
     stream_queue = _context_stack.get("stream_queue")
     if stream_queue is None:
@@ -16,6 +17,7 @@ def _emit_stream_event(event: dict) -> None:
 
 
 @crewai_event_bus.on(ToolUsageStartedEvent)
+ # Tool çalışmaya başladığında stream kanalına başlangıç olayı gönderir.
 async def on_tool_started(source, event: ToolUsageStartedEvent):
     if not _context_stack.get("message_id"):
         return
@@ -24,6 +26,7 @@ async def on_tool_started(source, event: ToolUsageStartedEvent):
 
 
 @crewai_event_bus.on(ToolUsageFinishedEvent)
+ # Tool tamamlandığında sonucu kalıcı kayda alır ve stream'e bitiş olayı basar.
 async def on_tool_used(source, event: ToolUsageFinishedEvent):
     if not _context_stack.get("message_id"):
         return

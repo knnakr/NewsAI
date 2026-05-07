@@ -1,3 +1,4 @@
+#Bu YAML’ları runtime’da yükleyip validate ederek nesneye çeviriyoruz
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -10,20 +11,24 @@ from app.crew.config.crew_schema import TasksFileConfig
 
 
 class _StrictFormatDict(dict):
+	# Eksik template değişkeni olduğunda hatayı erken ve anlaşılır şekilde yükseltir.
 	def __missing__(self, key: str):
 		raise KeyError(f"Missing template variable in task config: {key}")
 
 
+ # Task yapılandırma dosyasının yerini döndürür.
 def _config_path() -> Path:
 	return Path(__file__).with_name("tasks.yaml")
 
 
+ # YAML task tanımlarını doğrulayıp tipli yapılandırma nesnesine dönüştürür.
 def load_task_configs() -> TasksFileConfig:
 	with _config_path().open("r", encoding="utf-8") as f:
 		data = yaml.safe_load(f) or {}
 	return TasksFileConfig.model_validate(data)
 
 
+ # Runtime girdilerini task şablonlarına enjekte ederek bağlı task grafiğini üretir.
 def build_tasks(
 	*,
 	agents: dict,

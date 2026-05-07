@@ -30,6 +30,7 @@ class FetchNewsTool(BaseTool):
 	)
 	args_schema: type[BaseModel] = FetchNewsInput
 
+	# Kategori doğrulaması yaparak haberleri servis katmanından asenkron olarak çeker.
 	async def _arun(self, category: str, from_date: str | None = None) -> list[dict]:
 		allowed_categories = {
 			"world",
@@ -44,5 +45,6 @@ class FetchNewsTool(BaseTool):
 			raise ValueError("Geçersiz kategori")
 		return await get_or_fetch_articles(category, from_date=from_date)
 
+	# Senkron çağrıda kategoriye göre haber çekme akışını çalıştırır.
 	def _run(self, category: str, from_date: str | None = None) -> list[dict]:
 		return asyncio.run(self._arun(category=category, from_date=from_date))

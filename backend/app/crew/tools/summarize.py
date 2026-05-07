@@ -15,9 +15,11 @@ class SummarizeArticleTool(BaseTool):
 	description: str = "Verilen URL'deki makaleyi çekip 3-4 cümlelik özet üretir."
 	args_schema: type[BaseModel] = SummarizeInput
 
+	# Senkron çalıştırma gerektiren akışlarda özetleme coroutine'ini güvenle tetikler.
 	def _run(self, url: str) -> str:
 		return asyncio.run(self._arun(url=url))
 
+	# Verilen URL içeriğini çekip özetleme için ham metin olarak döndürür.
 	async def _arun(self, url: str) -> str:
 		try:
 			async with httpx.AsyncClient(timeout=10.0) as client:

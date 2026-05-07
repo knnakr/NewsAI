@@ -1,3 +1,4 @@
+#service layer: CrewAI'ı çalıştırır, context yönetir, hata yakalar ve retry/fallback mekanizmalarını uygular.
 from __future__ import annotations
 
 import asyncio
@@ -11,6 +12,7 @@ from app.crew.crew_factory import CrewFactory
 from app.crew.utils import clear_tool_call_context, set_tool_call_context
 
 
+ # Crew çalıştırması boyunca tool logging bağlamını güvenli şekilde açıp kapatır.
 async def kickoff_with_tool_context(*, crew, message_id: UUID, db, user_id: UUID | None = None):
 	"""Run crew kickoff with tool-call context lifecycle management."""
 	set_tool_call_context(message_id, db, user_id)
@@ -21,6 +23,7 @@ async def kickoff_with_tool_context(*, crew, message_id: UUID, db, user_id: UUID
 	return result
 
 
+ # Sohbet isteğini uygun crew akışına yönlendirip yanıt ve kaynak listesini döndürür.
 async def run_chat_crew(
 	user_message: str,
 	conversation_history: list[dict],
@@ -56,6 +59,7 @@ async def run_chat_crew(
 	return result, sources
 
 
+ # News crew çalıştırmasını geçici oran limiti hatalarına karşı geri deneme ile yönetir.
 async def _run_news_crew_with_retry(
 	*,
 	user_message: str,
@@ -86,6 +90,7 @@ async def _run_news_crew_with_retry(
 	raise RuntimeError("News crew unexpectedly failed without an exception")
 
 
+ # Haber URL'si için özetleme crew akışını retry/fallback kurallarıyla yürütür.
 async def run_article_summary_crew(
 	*,
 	article_url: str,
@@ -127,16 +132,19 @@ async def run_article_summary_crew(
 	raise RuntimeError("Summary crew unexpectedly failed without an exception")
 
 
+ # Hatanın oran limiti kaynaklı olup olmadığını mesaj kalıbından tespit eder.
 def _is_rate_limit_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return "rate_limit_exceeded" in message or "ratelimiterror" in message
 
 
+ # Özetleme sırasında tekrar denenebilir model yanıt hatalarını sınıflandırır.
 def _is_retryable_summary_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return "last message role must be 'user'" in message
 
 
+ # Hata mesajından bekleme süresi çıkararak kontrollü retry gecikmesi üretir.
 def _extract_retry_after_seconds(exc: Exception) -> float:
 	message = str(exc)
 	match = re.search(r"try again in\s+([0-9]+(?:\.[0-9]+)?)s", message, flags=re.IGNORECASE)
@@ -149,6 +157,7 @@ def _extract_retry_after_seconds(exc: Exception) -> float:
 		return 3.0
 
 
+ # Basit selamlaşma mesajlarını erken yakalayıp gereksiz crew çalıştırmasını önler.
 def _is_simple_greeting(user_message: str) -> bool:
 	text = user_message.strip().lower()
 	if not text:
@@ -168,12 +177,14 @@ def _is_simple_greeting(user_message: str) -> bool:
 	return text in greetings
 
 
+ # Crew çıktısından URL'leri ayıklayarak kaynak listesi formatına dönüştürür.
 def _parse_sources_from_result(result: str) -> list[dict]:
 	"""Extract URLs from markdown/plain text crew output as source list."""
 	urls = re.findall(r"https?://[^\s\)]+", result)
 	return [{"url": url} for url in urls[:10]]
 
 
+ # Model özet çıktısını markdown kalıntılarından arındırıp güvenli uzunluğa indirger.
 def _normalize_summary_text(summary: str) -> str:
 	text = summary.strip()
 	if not text:

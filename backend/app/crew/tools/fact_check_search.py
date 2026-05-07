@@ -21,9 +21,11 @@ class FactCheckSearchTool(BaseTool):
 	)
 	args_schema: type[BaseModel] = FactCheckSearchInput
 
+	# Senkron tool çağrısında fact-check aramasını asenkron işleyiciden yürütür.
 	def _run(self, claim: str) -> list[dict]:
 		return asyncio.run(self._arun(claim=claim))
 
+	# İddiayı fact-check odaklı sorguyla aratıp kanıt kaynaklarını normalize eder.
 	async def _arun(self, claim: str) -> list[dict]:
 		tavily = AsyncTavilyClient(api_key=settings.TAVILY_API_KEY)
 		response = await tavily.search(

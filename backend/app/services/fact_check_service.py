@@ -22,6 +22,7 @@ from app.schemas.fact_check import FactCheckResponse
 Orchestrator = Literal["crewai", "langgraph"]
 
 
+# Fact-check sonucu için API katmanında beklenen sözleşmeyi doğrular.
 class FactCheckResultPayload(BaseModel):
 	verdict: Literal["TRUE", "FALSE", "UNVERIFIED"]
 	explanation: str = Field(min_length=1)
@@ -29,12 +30,14 @@ class FactCheckResultPayload(BaseModel):
 	sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
+# LangGraph düğümleri arasında taşınan paylaşımlı durum alanlarını tanımlar.
 class FactCheckGraphState(TypedDict, total=False):
 	claim: str
 	research_sources: list[dict[str, Any]]
 	verdict_payload: dict[str, Any]
 
 
+# İddiayı seçili orkestratör ile doğrular, sonucu kaydeder ve kalıcı model döndürür.
 async def check_claim(claim: str, user_id: uuid.UUID | None, db: AsyncSession) -> FactCheck:
 	orchestrator = await _resolve_fact_check_orchestrator(user_id=user_id, db=db)
 	result = await _run_fact_check(claim=claim, orchestrator=orchestrator)
@@ -54,6 +57,7 @@ async def check_claim(claim: str, user_id: uuid.UUID | None, db: AsyncSession) -
 	return fact_check
 
 
+# Global ayar ve kullanıcı tercihini birleştirerek fact-check orkestratörünü seçer.
 async def _resolve_fact_check_orchestrator(*, user_id: uuid.UUID | None, db: AsyncSession) -> Orchestrator:
 	# Global safety switch: when disabled, always use CrewAI regardless of user preference.
 	if not settings.ENABLE_LANGGRAPH:
@@ -70,6 +74,7 @@ async def _resolve_fact_check_orchestrator(*, user_id: uuid.UUID | None, db: Asy
 	return "crewai"
 
 
+# Seçilen orkestratöre göre ilgili fact-check yürütme yolunu çağırır.
 async def _run_fact_check(*, claim: str, orchestrator: Orchestrator) -> dict:
 	try:
 		if orchestrator == "langgraph":
@@ -82,6 +87,7 @@ async def _run_fact_check(*, claim: str, orchestrator: Orchestrator) -> dict:
 		return _build_unverified_fallback_payload(exc)
 
 
+# LangGraph akışını çalıştırır ve doğrulanmış verdict payload üretir.
 async def _run_fact_check_with_langgraph(claim: str) -> dict:
 	_apply_langsmith_env()
 	graph = _build_fact_check_graph()
@@ -95,6 +101,7 @@ async def _run_fact_check_with_langgraph(claim: str) -> dict:
 	return _validate_fact_check_payload(payload)
 
 
+# Fact-check iş akışını iki düğümlü deterministik LangGraph olarak derler.
 def _build_fact_check_graph():
 	workflow = StateGraph(FactCheckGraphState)
 	workflow.add_node("research_claim", _research_claim_node)
@@ -105,6 +112,7 @@ def _build_fact_check_graph():
 	return workflow.compile()
 
 
+# İddia için paralel kaynak araştırması yapıp tekilleştirilmiş kanıt listesi döndürür.
 async def _research_claim_node(state: FactCheckGraphState) -> FactCheckGraphState:
 	claim = state["claim"]
 	fact_tool = FactCheckSearchTool()
@@ -119,6 +127,7 @@ async def _research_claim_node(state: FactCheckGraphState) -> FactCheckGraphStat
 	return {"research_sources": merged_sources[:8]}
 
 
+# Toplanan kaynakları değerlendirip yapılandırılmış doğruluk kararını üretir.
 async def _produce_verdict_node(state: FactCheckGraphState) -> FactCheckGraphState:
 	claim = state["claim"]
 	research_sources = state.get("research_sources", [])
@@ -164,6 +173,7 @@ async def _produce_verdict_node(state: FactCheckGraphState) -> FactCheckGraphSta
 	return {"verdict_payload": payload}
 
 
+# CrewAI tabanlı fact-check akışını geçici hatalara karşı retry ile yürütür.
 async def _run_fact_check_with_retry(claim: str) -> dict:
 	max_attempts = 5
 	for attempt in range(max_attempts):
@@ -187,11 +197,13 @@ async def _run_fact_check_with_retry(claim: str) -> dict:
 	raise RuntimeError("Fact-check crew unexpectedly failed without an exception")
 
 
+# Hatanın oran limiti kaynaklı olup olmadığını sınıflandırır.
 def _is_rate_limit_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return "rate_limit_exceeded" in message or "ratelimiterror" in message
 
 
+# LLM tarafında boş/eksik yanıt gibi geçici durumları tespit eder.
 def _is_transient_llm_response_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return (
@@ -200,6 +212,7 @@ def _is_transient_llm_response_error(exc: Exception) -> bool:
 	)
 
 
+# Upstream AI servislerinde beklenen ve tolere edilen hata ailesini belirler.
 def _is_known_upstream_ai_error(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return (
@@ -213,6 +226,7 @@ def _is_known_upstream_ai_error(exc: Exception) -> bool:
 	)
 
 
+# Bilinen upstream hatalarda kullanıcıya güvenli UNVERIFIED geri dönüşü üretir.
 def _build_unverified_fallback_payload(exc: Exception) -> dict[str, Any]:
 	message = str(exc).strip()
 	if len(message) > 240:
@@ -225,6 +239,7 @@ def _build_unverified_fallback_payload(exc: Exception) -> dict[str, Any]:
 	}
 
 
+# Model veya istek boyutu kaynaklı fallback tetikleyici hataları kontrol eder.
 def _needs_compound_fallback(exc: Exception) -> bool:
 	message = str(exc).lower()
 	return (
@@ -236,6 +251,7 @@ def _needs_compound_fallback(exc: Exception) -> bool:
 	)
 
 
+# Retry için hata mesajından saniye bazlı bekleme süresi çıkarır.
 def _extract_retry_after_seconds(exc: Exception) -> float:
 	message = str(exc)
 	match = re.search(r"try again in\s+([0-9]+(?:\.[0-9]+)?)s", message, flags=re.IGNORECASE)
@@ -247,6 +263,7 @@ def _extract_retry_after_seconds(exc: Exception) -> float:
 		return 3.0
 
 
+# Crew/LLM çıktısını tek bir sözlük formatında normalize eder.
 def _normalize_fact_check_output(raw: object) -> dict:
 	if isinstance(raw, dict):
 		return _validate_fact_check_payload(raw)
@@ -259,6 +276,7 @@ def _normalize_fact_check_output(raw: object) -> dict:
 	raise ValueError("Fact-check crew returned unsupported output format")
 
 
+# Verdict payload alanlarını şema kurallarına göre doğrular ve standartlaştırır.
 def _validate_fact_check_payload(payload: dict[str, Any]) -> dict[str, Any]:
 	payload = dict(payload)
 	payload["sources"] = _coerce_sources(payload.get("sources", []))
@@ -266,6 +284,7 @@ def _validate_fact_check_payload(payload: dict[str, Any]) -> dict[str, Any]:
 	return validated.model_dump()
 
 
+# Farklı source tiplerini API sözleşmesine uyumlu liste formatına dönüştürür.
 def _coerce_sources(raw_sources: Any) -> list[dict[str, Any]]:
 	if raw_sources is None:
 		return []
@@ -294,6 +313,7 @@ def _coerce_sources(raw_sources: Any) -> list[dict[str, Any]]:
 	return coerced
 
 
+# Kaynak listesini URL bazında tekilleştirip güvenli uzunluk sınırları uygular.
 def _deduplicate_sources(sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	seen_urls: set[str] = set()
 	result: list[dict[str, Any]] = []
@@ -312,10 +332,12 @@ def _deduplicate_sources(sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return result
 
 
+# CrewAI model adını Groq chat istemcisinin beklediği biçime çevirir.
 def _normalize_groq_chat_model(model_name: str) -> str:
 	return model_name.removeprefix("groq/")
 
 
+# LangSmith izleme etkinse gerekli ortam değişkenlerini çalışma anında ayarlar.
 def _apply_langsmith_env() -> None:
 	if not settings.LANGSMITH_TRACING:
 		return

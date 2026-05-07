@@ -11,16 +11,19 @@ from app.crew.tool_registry import registry
 from app.crew.config.crew_schema import AgentsFileConfig
 
 
+ # Agent yapılandırma dosyasının sabit yolunu üretir.
 def _config_path() -> Path:
 	return Path(__file__).with_name("agents.yaml")
 
 
+ # YAML'dan agent tanımlarını okuyup tip güvenli şemaya dönüştürür.
 def load_agent_configs() -> AgentsFileConfig:
 	with _config_path().open("r", encoding="utf-8") as f:
 		data = yaml.safe_load(f) or {}
 	return AgentsFileConfig.model_validate(data)
 
 
+ # Dil, ton ve model profiline göre CrewAI agent nesnelerini oluşturur.
 def build_agents(*, language: str, ai_tone: str, default_model: str | None = None, reasoning_model: str | None = None) -> dict[str, Agent]:
 	config = load_agent_configs()
 	agents: dict[str, Agent] = {}

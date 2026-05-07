@@ -14,7 +14,7 @@ from app.config import settings
 from app.database import AsyncSessionLocal, get_db
 from app.middleware.logging import logging_middleware
 from app.middleware.rate_limiter import rate_limit_middleware
-from app.routers import auth, conversations, fact_check, news, users
+from app.routers import auth, conversations, fact_check, mcp, news, users
 from app.utils.cache import run_cleanup
 
 # Configure logging
@@ -68,6 +68,7 @@ app.include_router(users.router)
 app.include_router(conversations.router)
 app.include_router(fact_check.router)
 app.include_router(news.router)
+app.include_router(mcp.router)
 
 
 async def startup_event() -> None:

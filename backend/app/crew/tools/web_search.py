@@ -22,9 +22,11 @@ class WebSearchTool(BaseTool):
 	)
 	args_schema: type[BaseModel] = WebSearchInput
 
+	# Senkron CrewAI çağrıları için asenkron arama akışını bloklayarak çalıştırır.
 	def _run(self, query: str, max_results: int = 5) -> list[dict]:
 		return asyncio.run(self._arun(query=query, max_results=max_results))
 
+	# Tavily üzerinden güncel web sonuçlarını toplayıp standart kaynak listesi döndürür.
 	async def _arun(self, query: str, max_results: int = 5) -> list[dict]:
 		tavily = AsyncTavilyClient(api_key=settings.TAVILY_API_KEY)
 		response = await tavily.search(
